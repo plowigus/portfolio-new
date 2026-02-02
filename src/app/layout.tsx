@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import "@/styles/globals.css";
+import { Navigation } from "@/components/Navigation";
 
 export const metadata: Metadata = {
   title: "Portfolio - Web Designer & Developer",
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div id="root">{children}</div>
+        <div id="root">
+          <Navigation />
+          {children}
+        </div>
       </body>
     </html>
   );
