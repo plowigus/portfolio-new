@@ -9,6 +9,8 @@
     "@types/three": "^0.182.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "*",
+    "framer-motion": "^12.30.0",
+    "framer-motion-3d": "^12.4.13",
     "gsap": "*",
     "leva": "^0.10.1",
     "lucide-react": "^0.487.0",

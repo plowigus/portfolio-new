@@ -2,9 +2,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { ChevronDown, Github, Linkedin, Instagram } from "lucide-react";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
-import { Canvas } from "@react-three/fiber";
 import { InteractiveSphere } from "./animation/InteractiveSphere";
-import { useControls } from "leva";
 
 // Lazy load heavy WebGL components for better initial page load
 const RippleGrid = React.lazy(() => import("./animation/Ripplegrid"));
@@ -12,15 +10,8 @@ const RippleGrid = React.lazy(() => import("./animation/Ripplegrid"));
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
 
-  const postProcessing = useControls("Post-Processing", {
-    blurAmount: { value: 1.0, min: 0, max: 10, step: 0.5, label: "Blur" },
-    brightness: { value: 100, min: 0, max: 200, step: 5, label: "Jasność (%)" },
-    contrast: { value: 0, min: 0, max: 200, step: 5, label: "Kontrast (%)" },
-    saturate: { value: 100, min: 0, max: 200, step: 5, label: "Saturacja (%)" },
-  });
-
   const filterStyle = {
-    filter: `blur(${postProcessing.blurAmount}px) brightness(${postProcessing.brightness}%) contrast(${postProcessing.contrast}%) saturate(${postProcessing.saturate}%)`,
+    filter: `blur(0px) brightness(100%) contrast(100%) saturate(100%)`, // Resetting filters as controls are removed
   };
 
   useEffect(() => {
@@ -60,25 +51,8 @@ export function HeroSection() {
         />
       </Suspense>
       <Suspense fallback={null}>
-        <div style={filterStyle} className="w-full h-full">
-          <Canvas
-            camera={{ position: [0, 0, 3], fov: 65 }}
-            className="h-dvh w-full"
-            style={{ height: "50dvh" }}
-          >
-            <ambientLight intensity={0.3} />
-            <directionalLight
-              position={[10, 10, 5]}
-              intensity={1.5}
-              castShadow
-            />
-            <directionalLight position={[-5, 5, 5]} intensity={0.5} />
-            <pointLight position={[0, 0, 5]} intensity={0.5} color="#4f46e5" />
-
-            <InteractiveSphere />
-
-            {/* <OrbitControls enableZoom={false} enablePan={false} /> */}
-          </Canvas>
+        <div style={filterStyle} className="w-full h-full" id="canvas-container">
+          <InteractiveSphere />
         </div>
       </Suspense>
 
