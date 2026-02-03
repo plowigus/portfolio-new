@@ -22,7 +22,8 @@
     "react-hook-form": "^7.55.0",
     "tailwind-merge": "*",
     "tailwindcss": "*",
-    "three": "^0.182.0"
+    "three": "^0.182.0",
+    "tone": "^15.1.22"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
