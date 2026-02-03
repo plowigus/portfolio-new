@@ -1,18 +1,18 @@
-import React, { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Github, Linkedin, Instagram } from "lucide-react";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
-import { InteractiveSphere } from "./animation/InteractiveSphere";
+// import InteractiveSphere from "./animation/InteractiveSphere"
 
 // Lazy load heavy WebGL components for better initial page load
-const RippleGrid = React.lazy(() => import("./animation/Ripplegrid"));
+// const RippleGrid = React.lazy(() => import("./animation/Ripplegrid"));
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
 
-  const filterStyle = {
-    filter: `blur(0px) brightness(100%) contrast(100%) saturate(100%)`, // Resetting filters as controls are removed
-  };
+  // const filterStyle = {
+  //   filter: `blur(0px) brightness(100%) contrast(100%) saturate(100%)`, // Resetting filters as controls are removed
+  // };
 
   useEffect(() => {
     const updateTime = () => {
@@ -37,7 +37,7 @@ export function HeroSection() {
       className="flex flex-col items-center justify-center px-6 md:px-12 pt-20 relative overflow-hidden bg-white"
       style={{ height: "100dvh", minHeight: "100dvh" }}
     >
-      <Suspense fallback={null}>
+      {/* <Suspense fallback={null}>
         <RippleGrid
           enableRainbow={false}
           gridColor="#00000"
@@ -54,7 +54,7 @@ export function HeroSection() {
         <div style={filterStyle} className="w-full h-full" id="canvas-container">
           <InteractiveSphere />
         </div>
-      </Suspense>
+      </Suspense> */}
 
       {/* Vertical Changing Text */}
       <VerticalChangingText />

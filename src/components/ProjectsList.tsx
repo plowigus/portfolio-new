@@ -50,7 +50,7 @@ export function ProjectsList() {
         {projects.map((project, index) => (
           <div
             key={index}
-            className="relative group flex-shrink-0 w-[85vw] md:w-96 aspect-square snap-center perspective-1000"
+            className="relative group shrink-0 w-[85vw] md:w-96 aspect-square snap-center perspective-1000"
           >
             {/* The "Record Sleeve" (Card Front) */}
             <div className={`relative z-20 w-full h-full ${project.color} rounded-md shadow-2xl flex items-center justify-center`}>

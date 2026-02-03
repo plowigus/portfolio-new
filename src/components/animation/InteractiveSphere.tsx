@@ -1,15 +1,15 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, ContactShadows } from "@react-three/drei";
+import { Environment, ContactShadows, Float } from "@react-three/drei";
 import * as THREE from "three";
 
-function Vinyl() {
+function BlueprintVinyl() {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Procedural Groove Texture - Generated in memory
-  const grooveTexture = useMemo(() => {
+  // 1. GENEROWANIE TEXTURY "SCHEMATU" (Canvas 2D)
+  const textures = useMemo(() => {
     if (typeof document === 'undefined') return null;
 
     const canvas = document.createElement('canvas');
@@ -18,111 +18,160 @@ function Vinyl() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
-    // 1. Black background
-    ctx.fillStyle = '#050505';
+    // Tło: Przezroczyste (Czarne dla maski)
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, 1024, 1024);
 
-    // 2. Draw concentric circles (The Grooves)
-    ctx.strokeStyle = '#222222';
-    ctx.lineWidth = 1;
     const center = 512;
 
-    // Start from label radius (approx 150px) to edge (approx 500px)
-    for (let r = 160; r < 500; r += 1.5) {
-      // Add slight noise to line width or color for realism if possible, 
-      // but simple circles work well for anisotropy base
+    // Rysujemy techniczne pierścienie
+    // Zamiast gęstych rowków -> rzadkie, precyzyjne linie pomiarowe
+    for (let r = 140; r < 500; r += 5) {
+
+      // Losujemy styl linii dla każdego okręgu
+      const variant = Math.random();
+
       ctx.beginPath();
+      ctx.strokeStyle = '#FFFFFF'; // Zawsze biały
+
+      if (variant > 0.9) {
+        // GŁÓWNE LINIE (Grube, ciągłe)
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]); // Ciągła
+        ctx.shadowBlur = 10; // Lekki glow
+        ctx.shadowColor = 'white';
+      } else if (variant > 0.6) {
+        // LINIE POMOCNICZE (Cienkie, przerywane)
+        ctx.lineWidth = 1;
+        ctx.setLineDash([10, 15]); // Kreska - przerwa
+        ctx.shadowBlur = 0;
+      } else if (variant > 0.3) {
+        // KROPKOWANIE (Dotted)
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 8]); // Kropka - długa przerwa
+        ctx.shadowBlur = 0;
+      } else {
+        // PUSTE MIEJSCA (Dla przejrzystości)
+        continue;
+      }
+
       ctx.arc(center, center, r, 0, 2 * Math.PI);
       ctx.stroke();
     }
 
+    // Dodatkowy element: "Celownik" / Osie na środku
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(center - 50, center);
+    ctx.lineTo(center + 50, center);
+    ctx.moveTo(center, center - 50);
+    ctx.lineTo(center, center + 50);
+    ctx.stroke();
+
     const texture = new THREE.CanvasTexture(canvas);
-    // Anisotropy helps with the "radial steak" reflection
     texture.anisotropy = 16;
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    return texture;
+
+    return {
+      map: texture,
+      alpha: texture,    // Jasność decyduje o widoczności
+      emissive: texture  // Jasność decyduje o świeceniu
+    };
   }, []);
 
   useFrame((state, delta) => {
     if (groupRef.current) {
-      // Rotation: ~33 RPM. 
-      // 33 RPM is ~3.5 rad/s. User suggested slower visual (delta * 1.0), 
-      // but let's go for a realistic "feel" somewhere in between or stick to user's "1.0 fine".
-      // Let's use 1.2 for a chill spin.
-      groupRef.current.rotation.y += delta * 1.2;
-
-      // Subtle Wobble (Z-axis) - characteristic of vinyl
-      // Using time to drive a slow sine wave
-      groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 3) * 0.015;
-
-      // Slight vertical floating to keep it alive
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.05;
+      // Powolny obrót techniczny
+      groupRef.current.rotation.y += delta * 0.2;
+      // Lekkie "skanowanie" góra dół
+      groupRef.current.rotation.x = 0.5 + Math.sin(state.clock.elapsedTime * 0.2) * 0.05;
     }
   });
 
+  if (!textures) return null;
+
   return (
-    <group ref={groupRef} rotation={[0.5, 0, 0]}>
-      {/* 1. Base Disc (The Vinyl) */}
-      <mesh receiveShadow castShadow>
-        <cylinderGeometry args={[4, 4, 0.1, 64]} />
-        <meshPhysicalMaterial
-          color="#050505"
-          map={grooveTexture}
-          bumpMap={grooveTexture}
-          bumpScale={0.02}
-          roughness={0.4}
-          metalness={0.1}
-          clearcoat={1.0}        // Plastic coating
-          clearcoatRoughness={0.1}
-          iridescence={0.1}      // Subtle oil-like sheen
-          envMapIntensity={1.2}
-        />
-      </mesh>
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+      <group ref={groupRef} rotation={[0.5, 0, 0]}>
 
-      {/* 2. The Label (Center) */}
-      <mesh position={[0, 0.051, 0]}>
-        <cylinderGeometry args={[1.5, 1.5, 0.02, 64]} />
-        {/* Accent Color: Indigo/Purple from project */}
-        <meshStandardMaterial color="#6366f1" roughness={0.3} />
-      </mesh>
+        {/* --- 1. GŁÓWNY DYSK (DATA RINGS) --- */}
+        <mesh>
+          <cylinderGeometry args={[2.8, 2.8, 0.02, 64]} />
+          <meshBasicMaterial
+            transparent={true}
+            opacity={0.9}
 
-      {/* 3. Spindle Hole (Center) */}
-      <mesh position={[0, 0.06, 0]}>
-        <cylinderGeometry args={[0.2, 0.2, 0.02, 32]} />
-        <meshStandardMaterial color="#111111" roughness={0.8} />
-      </mesh>
-    </group>
+            map={textures.map}
+            alphaMap={textures.alpha}
+
+            color="#ffffff"          // Czysta biel
+
+            // Tryb ADDITIVE sprawia, że czerń znika, a biel świeci
+            blending={THREE.AdditiveBlending}
+            side={THREE.DoubleSide}
+            depthWrite={false} // Ważne dla przenikania warstw
+          />
+        </mesh>
+
+        {/* --- 2. WIREFRAME CAGE (Siatka strukturalna) --- */}
+        {/* To dodaje ten efekt "surowego modelu 3D" */}
+        <mesh>
+          {/* Mniejsza ilość segmentów (32) dla kanciastego wyglądu */}
+          <cylinderGeometry args={[2.85, 2.85, 0.05, 32, 1]} />
+          <meshBasicMaterial
+            color="#555555" // Ciemnoszary
+            wireframe={true}
+            transparent
+            opacity={0.3}
+          />
+        </mesh>
+
+        {/* --- 3. ŚRODEK (Tech Center) --- */}
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry args={[0.8, 0.8, 0.03, 32]} />
+          <meshBasicMaterial color="#000000" />
+        </mesh>
+
+        {/* Biały pierścień wokół środka */}
+        <mesh position={[0, 0.02, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.75, 0.8, 64]} />
+          <meshBasicMaterial color="#ffffff" side={THREE.DoubleSide} />
+        </mesh>
+
+      </group>
+    </Float>
   );
 }
 
-export function InteractiveSphere() {
+export default function InteractiveSphere() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="w-full h-full bg-transparent" />;
+
   return (
-    <Canvas
-      camera={{ position: [0, 4, 6], fov: 40 }}
-      gl={{ alpha: true, antialias: true }}
-      className="w-full h-full"
-    >
-      <Environment preset="city" />
+    <div className="w-full h-full relative" style={{ minHeight: '400px' }}>
+      <Canvas
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, 8], fov: 30 }}
+        gl={{ alpha: true, antialias: true }}
+      >
+        {/* Minimalistyczne oświetlenie, bo blueprint sam świeci */}
+        {/* Preset city daje ładne, ostre refleksy na krawędziach */}
+        <Environment preset="city" />
 
-      <ambientLight intensity={0.5} />
-      <spotLight
-        position={[10, 10, 10]}
-        angle={0.25}
-        penumbra={1}
-        intensity={2}
-        castShadow
-      />
+        <BlueprintVinyl />
 
-      <Vinyl />
-
-      <ContactShadows
-        position={[0, -1.5, 0]}
-        opacity={0.6}
-        scale={12}
-        blur={2.5}
-        far={4}
-      />
-    </Canvas>
+        {/* Cień - biały/szary blask zamiast czarnej plamy */}
+        <ContactShadows
+          position={[0, -2.5, 0]}
+          opacity={0.3}
+          scale={10}
+          blur={4}
+          far={4}
+          color="#ffffff"
+        />
+      </Canvas>
+    </div>
   );
 }
