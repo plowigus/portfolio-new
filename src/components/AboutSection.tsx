@@ -1,98 +1,89 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+"use client";
 
-const skills = [
-  { name: "React", level: 95, color: "#61DAFB" },
-  { name: "TypeScript", level: 90, color: "#3178C6" },
-  { name: "Next.js", level: 92, color: "#000000" },
-  { name: "Tailwind", level: 98, color: "#06B6D4" },
-  { name: "Node.js", level: 85, color: "#339933" },
-  { name: "Three.js", level: 75, color: "#000000" },
-  { name: "Figma", level: 80, color: "#F24E1E" },
-  { name: "Design", level: 88, color: "#FF69B4" },
-  { name: "GSAP", level: 70, color: "#88CE02" },
-  { name: "WebGL", level: 65, color: "#990000" },
+import { ThreadsBackground } from "./ThreadsBackground";
+import {
+  IconReact,
+  IconNextjs,
+  IconTailwind,
+  IconTypescript,
+  IconNodejs,
+  IconFigma,
+  IconThreejs,
+} from "@/components/icons/TechIcons";
+
+
+const SKILLS = [
+  { name: "React 19", icon: IconReact },
+  { name: "Next.js", icon: IconNextjs },
+  { name: "TypeScript", icon: IconTypescript },
+  { name: "Tailwind CSS", icon: IconTailwind },
+  { name: "Node.js", icon: IconNodejs },
+  { name: "Three.js", icon: IconThreejs },
+  { name: "Figma", icon: IconFigma },
+  // { name: "WordPress", icon: IconWordpress }, // Optional
 ];
-
-function SkillBar({ skill }: { skill: typeof skills[0] }) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <div
-      className="relative flex flex-col items-center justify-end h-full gap-2 group"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Tooltip */}
-      {isHovered && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute -top-12 bg-neutral-900 text-white text-xs font-mono py-1 px-3 rounded-md whitespace-nowrap z-10"
-        >
-          {skill.name}
-        </motion.div>
-      )}
-
-      {/* Bar Track */}
-      <div className="w-3 md:w-4 bg-neutral-200 rounded-full h-32 md:h-48 relative overflow-hidden">
-        {/* Animated Fill */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 rounded-full"
-          style={{ backgroundColor: skill.color }}
-          initial={{ height: "0%" }}
-          whileInView={{ height: `${skill.level}%` }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        >
-          {/* Ongoing visualizer bounce effect */}
-          <motion.div
-            className="w-full h-full bg-white/20"
-            animate={{
-              y: [0, -4, 0],
-              opacity: [0, 0.5, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "linear",
-              delay: Math.random() * 2,
-            }}
-          />
-        </motion.div>
-      </div>
-    </div>
-  );
-}
 
 export function AboutSection() {
   return (
-    <section id="about" className="py-20 md:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-12">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
+    <section id="about" className="relative w-full min-h-[80vh] flex items-center bg-white overflow-hidden py-24 md:py-0">
 
-          {/* Text Content */}
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-neutral-500 mb-6">
-              About Me
-            </p>
-            <h2 className="text-4xl md:text-5xl font-medium text-neutral-900 mb-8 leading-tight">
-              Designing with <br />
-              <span className="text-neutral-400">rhythm & soul.</span>
-            </h2>
-            <p className="text-sm md:text-base text-neutral-600 leading-relaxed mb-8">
-              Just like a good EQ balances frequencies to create a perfect sound,
-              I balance design, performance, and user experience to build digital
-              products that resonate. From pixel-perfect UIs to complex 3D
-              interactions, my stack is tuned for impact.
-            </p>
+      <div className="absolute inset-0 z-0">
+        {/* Threads Background positioned to flow from right */}
+        <ThreadsBackground />
+        {/* Fade overlay to blend with white background naturally */}
+        <div className="absolute inset-0 bg-linear-to-r from-white via-white/80 to-transparent pointer-events-none" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 items-center">
+
+          {/* Left Column: Text Content */}
+          <div className="flex flex-col gap-8">
+            <div>
+              <h2 className="text-sm font-mono uppercase tracking-widest text-orange-600 mb-4">
+                About Me
+              </h2>
+              <h3 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 leading-[1.1] tracking-tight">
+                Crafting digital <br />
+                experiences with <span className="text-neutral-400">soul.</span>
+              </h3>
+            </div>
+
+            <div className="prose prose-neutral text-neutral-600 text-lg leading-relaxed space-y-6">
+              <p>
+                I am a multidisciplinary developer and designer obsessed with the intersection of logic and aesthetics.
+                My work is driven by a simple philosophy: digital products should be intuitive, performant, and beautiful.
+              </p>
+              <p>
+                With a background in both <strong className="text-neutral-900 font-medium">System Architecture</strong> and <strong className="text-neutral-900 font-medium">Creative Coding</strong>, I bridge the gap between robust engineering and delightful user interactions.
+                Whether it's optimizing Core Web Vitals or crafting granular WebGL shaders, I treat every line of code as a craft.
+              </p>
+            </div>
+
+            {/* Skills Cluster */}
+            <div className="mt-8 pt-8 border-t border-neutral-200">
+              <p className="text-xs font-mono uppercase tracking-widest text-neutral-500 mb-6">
+                Technologies & Tools
+              </p>
+              <div className="flex flex-wrap gap-4">
+                {SKILLS.map((skill) => (
+                  <div key={skill.name} className="flex items-center gap-2 px-4 py-2 bg-neutral-100 rounded-full border border-neutral-200 hover:border-orange-200 hover:bg-orange-50 transition-colors duration-300">
+                    <skill.icon className="w-5 h-5 text-neutral-700" />
+                    <span className="text-sm font-medium text-neutral-800">{skill.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Audio EQ Visualizer */}
-          <div className="h-64 md:h-80 flex items-end justify-between md:justify-start md:gap-4 px-4 py-8 bg-neutral-50 rounded-xl border border-neutral-100">
-            {skills.map((skill) => (
-              <SkillBar key={skill.name} skill={skill} />
-            ))}
+          {/* Right Column: Visual Space (Managed by ThreadsBackground but we can add a foreground element if needed) */}
+          <div className="hidden md:flex flex-col justify-center items-center h-full min-h-[500px] relative">
+            {/* 
+                The ThreadsBackground renders particles. 
+                We can add a subtle callout or stat here if desired.
+                For now, we let the negative space and the animation breathe.
+             */}
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
           </div>
 
         </div>
