@@ -6,13 +6,13 @@ import { cn } from "@/lib/utils";
 import Sparkle from "react-sparkle";
 
 interface RetroTalkingAvatarProps {
-    message?: string;
+    message?: string; // Default/First message
     className?: string;
     size?: number;
 }
 
 export function RetroTalkingAvatar({
-    message = "HELLO!",
+    message = " HOW U DOIN ? ;)", // Default level 1 message
     className,
     size = 40
 }: RetroTalkingAvatarProps) {
@@ -20,6 +20,7 @@ export function RetroTalkingAvatar({
     const [displayedText, setDisplayedText] = useState("");
     const [isTalking, setIsTalking] = useState(false);
     const [mouthState, setMouthState] = useState<"idle" | "talk">("idle");
+    const [hoverCount, setHoverCount] = useState(0);
 
     // Refs for intervals/timers to clear them properly
     const typewriterRef = useRef<NodeJS.Timeout | null>(null);
@@ -37,35 +38,58 @@ export function RetroTalkingAvatar({
         setMouthState("idle");
     };
 
+    const handleMouseEnter = () => {
+        setIsHovered(true);
+
+        // Increment global hover count (Session only, resets on refresh)
+        setHoverCount(prev => prev + 1);
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+    };
+
     useEffect(() => {
         if (isHovered) {
-            // Start Typewriter
+
+            const allQuotes = [
+                message,
+                " WHAT'S NOT TO LIKE ?",
+                " THE LINE IS A DOT TO YOU !",
+                " PAPER! SNOW! A GHOST!",
+                " IS THAT WHAT A DINOSAUR WOULD DO ?"
+            ];
+
+
+            const index = (hoverCount - 1) % allQuotes.length;
+            const targetMessage = allQuotes[index];
+
             let charIndex = 0;
             setIsTalking(true);
 
             typewriterRef.current = setInterval(() => {
-                if (charIndex < message.length) {
-                    setDisplayedText((prev) => prev + message.charAt(charIndex));
+                if (charIndex < targetMessage.length) {
+                    setDisplayedText((prev) => prev + targetMessage.charAt(charIndex));
                     charIndex++;
                 } else {
-                    // Finished typing
+
                     if (typewriterRef.current) clearInterval(typewriterRef.current);
-                    setIsTalking(false); // Stop talking animation
+                    setIsTalking(false);
                     setMouthState("idle");
                 }
-            }, 50); // Speed of typing
+            }, 50);
 
-            // Start Talking Animation (only if we are typing)
+
             talkingRef.current = setInterval(() => {
                 setMouthState((prev) => (prev === "idle" ? "talk" : "idle"));
-            }, 150); // Speed of mouth toggle
+            }, 150);
 
         } else {
             resetState();
         }
 
         return () => resetState();
-    }, [isHovered, message]);
+    }, [isHovered, message, hoverCount]);
 
     // Sync talking state: if we stop talking (finished typing), clear the mouth interval
     useEffect(() => {
@@ -79,8 +103,8 @@ export function RetroTalkingAvatar({
     return (
         <div
             className={cn("relative inline-block cursor-pointer group", className)}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
             {/* Speech Bubble */}
             {isHovered && (
@@ -101,7 +125,7 @@ export function RetroTalkingAvatar({
                         className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-4 border-t-transparent border-r-4 border-r-white border-b-4 border-b-transparent"
                     />
                     {/* React Sparkles */}
-                    <div className="absolute inset-0 pointer-events-none">
+                    {/* <div className="absolute inset-0 pointer-events-none">
                         <Sparkle
                             color="#a10885"
                             count={10}
@@ -109,9 +133,10 @@ export function RetroTalkingAvatar({
                             maxSize={10}
                             overflowPx={15}
                             flicker={true}
-                            flickerSpeed={'slowest'}
+                            flickerSpeed={'slowest'} // String enum as required by lib
+                            fadeOutSpeed={50}
                         />
-                    </div>
+                    </div> */}
                     {displayedText}
                     {/* Cursor blink effect */}
                     <span className="animate-pulse">_</span>
