@@ -1,18 +1,14 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, Github, Linkedin, Instagram } from "lucide-react";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import Github from "lucide-react/dist/esm/icons/github";
+import Linkedin from "lucide-react/dist/esm/icons/linkedin";
+import Instagram from "lucide-react/dist/esm/icons/instagram";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
-// import InteractiveSphere from "./animation/InteractiveSphere"
-
-// Lazy load heavy WebGL components for better initial page load
-// const RippleGrid = React.lazy(() => import("./animation/Ripplegrid"));
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
 
-  // const filterStyle = {
-  //   filter: `blur(0px) brightness(100%) contrast(100%) saturate(100%)`, // Resetting filters as controls are removed
-  // };
 
   useEffect(() => {
     const updateTime = () => {
@@ -37,34 +33,14 @@ export function HeroSection() {
       className="flex flex-col items-center justify-center px-6 md:px-12 pt-20 relative overflow-hidden bg-white"
       style={{ height: "100dvh", minHeight: "100dvh" }}
     >
-      {/* <Suspense fallback={null}>
-        <RippleGrid
-          enableRainbow={false}
-          gridColor="#00000"
-          rippleIntensity={0.07}
-          gridSize={20}
-          gridThickness={70}
-          mouseInteraction={true}
-          mouseInteractionRadius={1.5}
-          opacity={0.4}
-          gridRotation={55}
-        />
-      </Suspense>
-      <Suspense fallback={null}>
-        <div style={filterStyle} className="w-full h-full" id="canvas-container">
-          <InteractiveSphere />
-        </div>
-      </Suspense> */}
 
-      {/* Vertical Changing Text */}
+
+
       <VerticalChangingText />
 
-      {/* Right Decorative Line */}
       <RightDecorativeLine />
 
-      {/* 3D Floating Shape i panel ustawień usunięte */}
 
-      {/* Noise Effect Overlay */}
       <div
         className="absolute inset-0 opacity-[0.015] pointer-events-none"
         style={{
@@ -82,7 +58,7 @@ export function HeroSection() {
                 href="https://linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
@@ -90,7 +66,7 @@ export function HeroSection() {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
               >
                 <Instagram className="w-5 h-5" />
               </a>
@@ -98,7 +74,7 @@ export function HeroSection() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-700 hover:text-neutral-900 transition-colors"
+                className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
               >
                 <Github className="w-5 h-5" />
               </a>

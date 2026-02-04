@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { ArrowUpRight, Github } from "lucide-react";
+import ArrowUpRight from "lucide-react/dist/esm/icons/arrow-up-right";
+import Github from "lucide-react/dist/esm/icons/github";
 import {
     IconReact,
     IconNextjs,
@@ -89,12 +90,12 @@ function ProjectCard({ project }: { project: Project }) {
 
                     <div className="flex gap-2 opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                         {project.repo && (
-                            <a href={project.repo} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors">
+                            <a href={project.repo} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer">
                                 <Github className="w-5 h-5" />
                             </a>
                         )}
                         {project.link && (
-                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors">
+                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer">
                                 <ArrowUpRight className="w-5 h-5" />
                             </a>
                         )}
@@ -134,10 +135,7 @@ export function ProjectsSection() {
                             Featured Projects
                         </h3>
                     </div>
-                    <p className="text-neutral-400 max-w-md text-sm md:text-base leading-relaxed">
-                        A curated selection of web applications, experiments, and open-source
-                        contributions. Built with precision and modern technologies.
-                    </p>
+
                 </div>
 
                 {/* Bento Grid */}

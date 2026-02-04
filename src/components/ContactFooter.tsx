@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent } from 'react';
-import { ArrowRight } from 'lucide-react';
+import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 
 export function ContactFooter() {
   const [email, setEmail] = useState('');
@@ -40,7 +40,7 @@ export function ContactFooter() {
                 />
                 <button
                   type="submit"
-                  className="ml-4 hover:text-neutral-400 transition-colors"
+                  className="ml-4 hover:text-neutral-400 transition-colors cursor-pointer"
                 >
                   <ArrowRight className="w-5 h-5" />
                 </button>
@@ -51,16 +51,16 @@ export function ContactFooter() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 pt-8 border-t border-neutral-800 text-xs text-neutral-500">
           <div className="flex items-center gap-8">
-            <a href="#" className="text-white hover:text-neutral-400 transition-colors">
+            <a href="#" className="text-white hover:text-neutral-400 transition-colors cursor-pointer">
               P
             </a>
-            <a href="#" className="hover:text-neutral-400 transition-colors">
+            <a href="#" className="hover:text-neutral-400 transition-colors cursor-pointer">
               Home
             </a>
-            <a href="#about" className="hover:text-neutral-400 transition-colors">
+            <a href="#about" className="hover:text-neutral-400 transition-colors cursor-pointer">
               About
             </a>
-            <a href="#works" className="hover:text-neutral-400 transition-colors">
+            <a href="#works" className="hover:text-neutral-400 transition-colors cursor-pointer">
               Works
             </a>
           </div>

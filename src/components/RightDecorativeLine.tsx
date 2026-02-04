@@ -47,7 +47,7 @@ export function RightDecorativeLine() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-end">
         <div
           ref={containerRef}
-          className="flex flex-col items-center cursor-pointer px-4"
+          className="flex flex-col items-center cursor-pointer translate-x-[25px]"
           onMouseEnter={handleMouseMove}
         >
           {/* Top Circle */}
