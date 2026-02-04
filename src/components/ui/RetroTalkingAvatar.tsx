@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import Sparkle from "react-sparkle";
+// import Sparkle from "react-sparkle";
 
 interface RetroTalkingAvatarProps {
     message?: string; // Default/First message
