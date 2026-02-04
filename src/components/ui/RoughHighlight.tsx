@@ -81,8 +81,7 @@ export function RoughHighlight({
         const durationPerPath = animationDuration * 15
         const staggerDelay = animationDuration / totalPaths;
 
-        paths.forEach((path, i) => {
-            1
+        paths.forEach((path) => {
             const length = path.getTotalLength();
 
             // HACK: Wymuszamy stylowanie, żeby linia była widoczna jako obrys

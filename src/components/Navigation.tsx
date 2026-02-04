@@ -6,6 +6,7 @@ import Menu from "lucide-react/dist/esm/icons/menu";
 import X from "lucide-react/dist/esm/icons/x";
 import { RoughNotation } from "react-rough-notation";
 import { RoughHighlight } from "./ui/RoughHighlight";
+import { RetroTalkingAvatar } from "./ui/RetroTalkingAvatar";
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -81,9 +82,9 @@ function Logo() {
   return (
     <Link
       href="/"
-      className="text-2xl font-bold text-neutral-900 tracking-tighter hover:opacity-70 transition-opacity"
+      className="block relative hover:opacity-90 transition-opacity"
     >
-      P.
+      <RetroTalkingAvatar message=" HOW U DOIN ? ;)" size={80} className="relative -left-[25px]" />
     </Link>
   );
 }
