@@ -7,29 +7,23 @@ import X from "lucide-react/dist/esm/icons/x";
 import { RoughNotation } from "react-rough-notation";
 import { RoughHighlight } from "./ui/RoughHighlight";
 
-function NavLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: ReactNode;
-}) {
+function NavLink({ href, children }: { href: string; children: ReactNode }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <Link
       href={href}
-      className="text-sm font-mono uppercase text-neutral-800 relative group py-1 cursor-pointer"
+      className="text-sm uppercase font-medium text-neutral-800 relative group py-1 cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <RoughNotation
         type="underline"
         show={isHovered}
-        color="#171717" // neutral-900
-        strokeWidth={1}
+        color="#171717"
+        strokeWidth={1.5}
         animationDuration={300}
-        padding={3}
+        padding={4}
       >
         {children}
       </RoughNotation>
@@ -43,60 +37,53 @@ function ContactLink() {
   return (
     <Link
       href="#contact"
-      className="text-sm font-mono uppercase px-4 py-2 relative text-neutral-900 group"
+      className="relative px-6 py-3  group inline-block "
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <span className="relative z-10">CONTACT US</span>
+      {/* TEKST */}
+      <span className="relative z-20 text-sm font-medium uppercase text-neutral-800 ">
+        CONTACT US
+      </span>
 
-      {/* Custom RoughJS Fill Background */}
-      <RoughHighlight
-        show={isHovered}
-        color="#ea580c"
-        fillStyle="zigzag" // Drawing effect
-        fillWeight={1}
-        hachureGap={3}
-        animationDuration={600}
-      />
-
-      {/* RoughNotation Box Outline */}
+      {/* ANIMOWANE WYPEŁNIENIE */}
       <div className="absolute inset-0 z-0">
+        <RoughHighlight
+          show={isHovered}
+          color="#fb923c" // Orange
+          fillStyle="hachure" // Zigzag rysuje się super płynnie jako jedna linia
+          hachureGap={3}
+          fillWeight={1}
+          animationDuration={1000}
+          roughness={3}
+          bowing={1}
+        />
+      </div>
+
+      {/* RAMKA (Statyczna czy też rysowana? Tutaj wersja statyczna, zawsze widoczna) */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
         <RoughNotation
           type="box"
           show={true}
-          color={isHovered ? "#ea580c" : "#171717"}
+          animate={true} // Ramka jest od razu, tylko środek się animuje
+          color="#171717"
           strokeWidth={1}
           padding={0}
-          animationDuration={300}
-          iterations={2}
+          iterations={6}
         >
-          <span className="block w-full h-full" />
+          <div className="w-full h-full" />
         </RoughNotation>
       </div>
     </Link>
   );
 }
-
 function Logo() {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <Link
       href="/"
-      className="text-2xl font-mono text-neutral-900 relative group cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="text-2xl font-bold text-neutral-900 tracking-tighter hover:opacity-70 transition-opacity"
     >
-      <RoughNotation
-        type="circle"
-        show={isHovered}
-        color="#171717"
-        strokeWidth={1}
-        padding={8}
-        animationDuration={300}
-      >
-        <span className="relative tracking-tight">P.</span>
-      </RoughNotation>
+      P.
     </Link>
   );
 }
@@ -105,8 +92,8 @@ export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-sm">
-      <nav className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-neutral-100/50">
+      <nav className="max-w-7xl mx-auto px-6 md:px-12 py-5 flex items-center justify-between">
         <Logo />
 
         {/* Desktop Menu */}
@@ -117,52 +104,22 @@ export function Navigation() {
           <ContactLink />
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden text-neutral-900 hover:text-neutral-600 transition-colors cursor-pointer"
+          className="md:hidden p-2 -mr-2 text-neutral-900"
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <Menu className="w-6 h-6" />
-          )}
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu Overlay */}
         {isMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-neutral-200 md:hidden">
-            <div className="flex flex-col px-6 py-4 gap-4">
-              <Link
-                href="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-sm text-neutral-800 hover:text-neutral-600 transition-colors py-2"
-              >
-                Home
-              </Link>
-              <Link
-                href="#about"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-sm text-neutral-800 hover:text-neutral-600 transition-colors py-2"
-              >
-                About
-              </Link>
-              <Link
-                href="#works"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-sm text-neutral-800 hover:text-neutral-600 transition-colors py-2"
-              >
-                Works
-              </Link>
-              <Link
-                href="#contact"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-sm bg-neutral-900 text-white px-6 py-2.5 rounded-sm hover:bg-neutral-800 transition-colors text-center"
-              >
-                Contact us
-              </Link>
-            </div>
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-neutral-200 p-6 md:hidden flex flex-col gap-4 shadow-xl">
+            <Link href="/" className="text-lg" onClick={() => setIsMenuOpen(false)}>Home</Link>
+            <Link href="#about" className="text-lg" onClick={() => setIsMenuOpen(false)}>About</Link>
+            <Link href="#works" className="text-lg" onClick={() => setIsMenuOpen(false)}>Works</Link>
+            <Link href="#contact" className="text-lg font-bold text-orange-600" onClick={() => setIsMenuOpen(false)}>Contact Us</Link>
           </div>
         )}
       </nav>

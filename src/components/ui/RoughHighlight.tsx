@@ -8,11 +8,11 @@ interface RoughHighlightProps {
     show: boolean;
     roughness?: number;
     bowing?: number;
-    fillStyle?: "hachure" | "solid" | "zigzag" | "cross-hatch" | "dots" | "sunburst" | "dashed" | "zigzag-line";
+    fillStyle?: "zigzag" | "hachure" | "cross-hatch" | "dashed";
     fillWeight?: number;
     hachureGap?: number;
     hachureAngle?: number;
-    animationDuration?: number;
+    animationDuration?: number; // Czas rysowania CAŁOŚCI (nie jednej kreski)
 }
 
 export function RoughHighlight({
@@ -20,94 +20,108 @@ export function RoughHighlight({
     show,
     roughness = 2,
     bowing = 1,
-    fillStyle = "dots", // zigzag gives a nice "scribble" drawing effect
-    fillWeight = 1,
+    fillStyle = "zigzag",
+    fillWeight = 2,
     hachureGap = 4,
-    animationDuration = 600,
+    animationDuration = 6000,
 }: RoughHighlightProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
 
-    // Update dimensions on mount/resize
+    // Obsługa zmiany rozmiaru
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const updateDimensions = () => {
-            if (containerRef.current) {
-                setDimensions({
-                    width: containerRef.current.offsetWidth,
-                    height: containerRef.current.offsetHeight,
-                });
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setWidth(entry.contentRect.width);
+                setHeight(entry.contentRect.height);
             }
-        };
+        });
 
-        updateDimensions();
-        window.addEventListener("resize", updateDimensions);
-
-        return () => window.removeEventListener("resize", updateDimensions);
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
     }, []);
 
-    // Draw and Animate
+    // Główna logika rysowania
     useEffect(() => {
-        if (!svgRef.current || dimensions.width === 0) return;
+        if (!svgRef.current || width === 0 || height === 0) return;
 
         const svg = svgRef.current;
 
-        // Clear previous if not showing or re-drawing
         if (!show) {
-            while (svg.lastChild) {
-                svg.removeChild(svg.lastChild);
-            }
+            svg.innerHTML = '';
             return;
         }
 
-        // Only draw if empty (or we could clear and redraw every time, but consistency helps)
-        // Clearing is safer for updates
-        while (svg.lastChild) {
-            svg.removeChild(svg.lastChild);
-        }
+        svg.innerHTML = '';
 
         const rc = rough.svg(svg);
-        const node = rc.rectangle(2, 2, dimensions.width - 4, dimensions.height - 4, {
+        const padding = 2;
+
+        // 2. Generowanie kształtu
+        const node = rc.rectangle(padding, padding, width - (padding * 2), height - (padding * 2), {
             fill: color,
             fillStyle: fillStyle,
-            stroke: "none", // We only want the fill
+            stroke: "none", // Wyłączamy główny obrys prostokąta, chcemy tylko środek
             roughness: roughness,
             bowing: bowing,
             fillWeight: fillWeight,
             hachureGap: hachureGap,
         });
 
-        // Prepare animation
+        // 3. Przygotowanie ścieżek do animacji
         const paths = node.querySelectorAll("path");
-        paths.forEach((path) => {
+
+        // Obliczamy czas na jedną ścieżkę, żeby całość zmieściła się w animationDuration
+        // Jeśli mamy 10 kresek, a czas to 500ms, każda ma 50ms na narysowanie + opóźnienie
+        const totalPaths = paths.length;
+        const durationPerPath = animationDuration * 15
+        const staggerDelay = animationDuration / totalPaths;
+
+        paths.forEach((path, i) => {
+            1
             const length = path.getTotalLength();
+
+            // HACK: Wymuszamy stylowanie, żeby linia była widoczna jako obrys
+            path.style.fill = "none";
+            path.style.stroke = color;
+            path.style.strokeWidth = `${fillWeight}px`;
+
+            // Ustawiamy stan początkowy: linia cofnięta (niewidoczna)
             path.style.strokeDasharray = `${length}`;
             path.style.strokeDashoffset = `${length}`;
-            path.style.transition = `stroke-dashoffset ${animationDuration}ms ease-out`;
+
+            // Reset tranzycji na start (żeby nie animowało się cofanie)
+            path.style.transition = "none";
         });
 
         svg.appendChild(node);
 
-        // Trigger animation next frame
+        // 4. Wyzwalacz animacji (Double RAF dla pewności)
         requestAnimationFrame(() => {
-            // Force reflow?
-            svg.getBoundingClientRect();
-            paths.forEach((path) => {
-                path.style.strokeDashoffset = "0";
+            requestAnimationFrame(() => {
+                paths.forEach((path, i) => {
+                    // Obliczamy opóźnienie dla efektu "fali" (kolejne linie startują później)
+                    const delay = i * staggerDelay;
+
+                    path.style.transition = `stroke-dashoffset ${durationPerPath}ms ease-out ${delay}ms`;
+                    path.style.strokeDashoffset = "0";
+                });
             });
         });
 
-    }, [dimensions, color, show, roughness, bowing, fillStyle, fillWeight, hachureGap, animationDuration]);
+    }, [width, height, show, color, fillStyle, roughness, bowing, fillWeight, hachureGap, animationDuration]);
 
     return (
-        <div ref={containerRef} className="absolute inset-0 z-0 pointer-events-none">
+        <div ref={containerRef} className="absolute inset-0 pointer-events-none z-0">
             <svg
                 ref={svgRef}
                 width="100%"
                 height="100%"
-                style={{ overflow: "visible" }}
+                className="overflow-visible"
             />
         </div>
     );
