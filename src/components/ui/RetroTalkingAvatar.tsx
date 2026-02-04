@@ -103,7 +103,7 @@ export function RetroTalkingAvatar({
                     {/* React Sparkles */}
                     <div className="absolute inset-0 pointer-events-none">
                         <Sparkle
-                            color="#fc03cf"
+                            color="#a10885"
                             count={10}
                             minSize={5}
                             maxSize={10}
