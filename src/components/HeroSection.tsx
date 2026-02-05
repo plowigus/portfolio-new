@@ -5,7 +5,7 @@ import Linkedin from "lucide-react/dist/esm/icons/linkedin";
 import Instagram from "lucide-react/dist/esm/icons/instagram";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
-import GameHero from "./animation/GameHero";
+import GameHero from "./game/GameHero";
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
