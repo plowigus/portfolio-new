@@ -18,8 +18,8 @@ const GAME_CONFIG = {
     obstacleSpeed: 5,
     spawnMinTime: 60,
     spawnMaxTime: 150,
-    knockbackX: 3,
-    knockbackY: -8,
+    knockbackX: 20,
+    knockbackY: -10,
     platformHeight: 100, // Grubość ziemi
     minGap: 240,         // Minimalna dziura
     maxGap: 320,         // Maksymalna dziura (bezpieczna granica to ~400)
@@ -29,9 +29,8 @@ const GAME_CONFIG = {
     characterVisualOffset: -15,
     coyoteTime: 6,       // Przez ile klatek po spadnięciu można jeszcze skoczyć (naprawia łączenia klocków)
     jumpBuffer: 8,
-    obstacleLowOffset: -45,
-    obstacleHighOffset: -50,       // Ile klatek gra pamięta wciśnięcie spacji przed dotknięciem ziemi
-    // 🪙 COIN CONFIGURATION (Pełna regulacja)
+    obstacleLowOffset: -25,
+    obstacleHighOffset: -45,
     coinSize: 30,
     coinHitbox: 20,
     coinSpawnChance: 0.6,    // 60% szans, że monety się pojawią (0.0 - 1.0)
