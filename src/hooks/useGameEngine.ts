@@ -11,6 +11,7 @@ import { useInput } from './useInput';
 export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | null>) => {
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [restartKey, setRestartKey] = useState(0);
 
     const { keys, jumpBufferTimer } = useInput();
 
@@ -20,17 +21,30 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
     const spawnerRef = useRef<SpawnerSystem | null>(null);
     const assetManagerRef = useRef<AssetManager | null>(null);
 
-    // Game State Refs (Mutable)
+    // Game State Refs (Mutable) for Loop Logic
     const gameState = useRef({
         vx: 0,
         coyoteTimer: 0,
         currentMoveSpeed: GAME_CONFIG.moveSpeed,
         worldSpeed: 0,
-        score: 0 // Sync ref for performance
+        score: 0,
+        isGameOverLogic: false // Internal flag for loop
     });
 
     useEffect(() => {
         if (!containerRef.current) return;
+
+        // Reset state
+        setIsGameOver(false);
+        setScore(0);
+        gameState.current = {
+            vx: 0,
+            coyoteTimer: 0,
+            currentMoveSpeed: GAME_CONFIG.moveSpeed,
+            worldSpeed: 0,
+            score: 0,
+            isGameOverLogic: false
+        };
 
         const init = async () => {
             // 1. Init Systems
@@ -58,10 +72,26 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
             character.play();
             renderer.app.stage.addChild(character);
 
-            // 3. Collision Logic (Additional Game Logic hooking into Physics events)
-            // Note: PhysicsSystem handles basic start/active/end for ground.
-            // We need to handle specific logic like Coins or Obstacles here or inside Physics/Spawner
-            // Let's hook into Matter events here for specific Game Over / Score logic
+            // Helper to trigger Game Over
+            const triggerGameOver = () => {
+                if (gameState.current.isGameOverLogic) return;
+                gameState.current.isGameOverLogic = true;
+                setIsGameOver(true); // Update UI
+
+                character.textures = assetManager.animations.dead;
+                character.loop = false;
+                character.play();
+
+                gameState.current.vx = -GAME_CONFIG.knockbackX;
+                // Apply knockback physics
+                if (physics.playerBody) {
+                    Matter.Body.setVelocity(physics.playerBody, { x: 0, y: 0 });
+                    Matter.Body.applyForce(physics.playerBody, physics.playerBody.position, { x: -0.05, y: -0.05 });
+                }
+                console.log("💥 GAME OVER");
+            };
+
+            // 3. Collision Logic
             Matter.Events.on(physics.engine, 'collisionStart', (event) => {
                 event.pairs.forEach((pair) => {
                     const { bodyA, bodyB } = pair;
@@ -76,7 +106,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                             gameState.current.score += 1;
                             setScore(gameState.current.score); // Sync to UI
 
-                            // Speed Up
+                            // Speed Up Logic
                             if (gameState.current.score % 10 === 0) {
                                 if (gameState.current.currentMoveSpeed < GAME_CONFIG.maxMoveSpeed) {
                                     gameState.current.currentMoveSpeed += 0.5;
@@ -90,23 +120,16 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                     const obsBody = bodyA.label.includes('obstacle') ? bodyA : (bodyB.label.includes('obstacle') ? bodyB : null);
 
                     if (obsBody && !obsBody.label.includes('coin')) {
-                        // Check collision with player
                         const otherBody = bodyA === obsBody ? bodyB : bodyA;
                         if (otherBody.label === 'player') {
                             const isHigh = obsBody.label === 'obstacle_high';
                             const isSliding = keys.current["ArrowDown"] || keys.current["KeyS"];
 
+                            // Dodge Logic
                             if (isHigh && isSliding) {
-                                // Dodge success
+                                // Successful dodge
                             } else {
-                                console.log("💥 GAME OVER");
-                                setIsGameOver(true);
-                                character.textures = assetManager.animations.dead;
-                                character.loop = false;
-                                character.play();
-                                gameState.current.vx = -GAME_CONFIG.knockbackX;
-                                Matter.Body.setVelocity(physics.playerBody!, { x: 0, y: 0 });
-                                Matter.Body.applyForce(physics.playerBody!, physics.playerBody!.position, { x: -0.05, y: -0.05 });
+                                triggerGameOver();
                             }
                         }
                     }
@@ -123,9 +146,10 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
 
                 const state = gameState.current;
                 const playerBody = physics.playerBody;
+                const logicGameOver = state.isGameOverLogic;
 
-                // Physics/Movement Logic
-                if (!isGameOver) {
+                if (!logicGameOver) {
+                    // Ground check
                     if (physics.isTouchingGround) {
                         state.coyoteTimer = GAME_CONFIG.coyoteTime;
                     } else {
@@ -133,6 +157,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                     }
                     if (jumpBufferTimer.current > 0) jumpBufferTimer.current -= delta;
 
+                    // Jump
                     if (jumpBufferTimer.current > 0 && state.coyoteTimer > 0) {
                         Matter.Body.setVelocity(playerBody, { x: playerBody.velocity.x, y: GAME_CONFIG.jumpPower });
                         state.coyoteTimer = 0;
@@ -143,42 +168,43 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                         character.play();
                     }
 
+                    // Movement
                     state.worldSpeed = 0;
                     const isRightPressed = keys.current["ArrowRight"] || keys.current["KeyD"];
                     if (isRightPressed) state.worldSpeed = state.currentMoveSpeed;
 
-                    // Update Spawner (Platforms/Obstacles/Coins)
+                    // Update Spawner
                     spawner.update(delta, state.worldSpeed);
                 }
 
-                // Player Velocity Handling
+                // Physics Handling (Gravity & Grounding)
                 let currentVy = playerBody.velocity.y;
                 currentVy += GAME_CONFIG.gravity;
                 if (currentVy > 20) currentVy = 20;
 
                 const effectivelyGrounded = state.coyoteTimer > 0;
 
-                if (isGameOver && effectivelyGrounded) {
-                    state.vx *= 0.9;
+                if (logicGameOver && effectivelyGrounded) {
+                    state.vx *= 0.9; // Friction when dead on ground
                     Matter.Body.setVelocity(playerBody, { x: state.vx, y: currentVy });
-                } else if (!isGameOver) {
+                } else if (!logicGameOver) {
                     Matter.Body.setVelocity(playerBody, { x: state.vx, y: currentVy });
                 } else {
                     Matter.Body.setVelocity(playerBody, { x: playerBody.velocity.x, y: currentVy });
                 }
 
-                // Update Character Sprite
+                // Sync Sprite
                 character.x = playerBody.position.x;
                 character.y = playerBody.position.y + GAME_CONFIG.characterVisualOffset;
 
-                // Fall off map
-                if (character.y > GAME_CONFIG.height + 200 && !isGameOver) {
-                    setIsGameOver(true);
-                    setScore(state.score); // Ensure final score is flushed
+                // Fall Condition
+                if (character.y > GAME_CONFIG.height + 200 && !logicGameOver) {
+                    triggerGameOver();
+                    setScore(state.score);
                 }
 
-                // Animations
-                if (!isGameOver) {
+                // Animation State Machine
+                if (!logicGameOver) {
                     if (effectivelyGrounded) {
                         const slidePressed = keys.current["ArrowDown"] || keys.current["KeyS"];
                         const isMoving = state.worldSpeed > 0;
@@ -205,7 +231,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                             }
                         }
                     } else {
-                        // Fall / Jump
+                        // Air Animation
                         if (playerBody.velocity.y > 2 && character.textures !== assetManager.animations.jump) {
                             character.textures = assetManager.animations.jump;
                             character.loop = false;
@@ -216,18 +242,19 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
             });
         };
 
-        init();
-
-        return () => {
+        const cleanup = () => {
             if (physicsRef.current) physicsRef.current.cleanup();
             if (rendererRef.current) rendererRef.current.cleanup();
             if (spawnerRef.current) spawnerRef.current.cleanup();
         };
-    }, []); // Empty dependency array = run once on mount
+
+        init();
+
+        return cleanup;
+    }, [restartKey]); // Restart when key changes
 
     const restartGame = () => {
-        // Simple reload for now, or reset all systems
-        window.location.reload();
+        setRestartKey(prev => prev + 1);
     };
 
     return { score, isGameOver, restartGame };

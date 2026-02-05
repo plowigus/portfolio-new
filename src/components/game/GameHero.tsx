@@ -2,7 +2,8 @@
 
 import { useRef } from 'react';
 import { useGameEngine } from '@/hooks/useGameEngine';
-import { GameUI } from './GameUI';
+import Noise from "@/components/animation/Noise";
+import { GameUI } from "./GameUI";
 
 export default function GameHero() {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -12,8 +13,11 @@ export default function GameHero() {
         <div className="relative w-full max-w-[1080px] mx-auto group">
             <div
                 ref={containerRef}
-                className="relative w-[1080px] h-[450px] mx-auto z-10 overflow-hidden bg-white shadow-2xl rounded-xl border-4 border-slate-900"
+                className="relative w-[1080px] h-[450px] mx-auto z-10 overflow-hidden bg-white  rounded-xl "
             >
+                <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
+                    <Noise patternAlpha={60} patternSize={350} />
+                </div>
                 <GameUI
                     score={score}
                     isGameOver={isGameOver}
@@ -21,10 +25,6 @@ export default function GameHero() {
                 />
             </div>
 
-            {/* Instruction Overlay (Optional, consistent with portfolio style) */}
-            <div className="absolute -bottom-10 left-0 w-full text-center text-slate-500 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                Jump: Space/W/UpArrow | Slide: S/DownArrow | Restart: R
-            </div>
         </div>
     );
 }

@@ -28,3 +28,16 @@
 }
 
 /* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"); */
+
+@font-face {
+  font-family: 'Pixeboy';
+  src: url('/fonts/Pixeboy-z8XGD.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@layer utilities {
+  .font-retro {
+    font-family: 'Pixeboy', monospace;
+  }
+}
