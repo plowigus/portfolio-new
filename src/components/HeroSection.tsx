@@ -5,6 +5,7 @@ import Linkedin from "lucide-react/dist/esm/icons/linkedin";
 import Instagram from "lucide-react/dist/esm/icons/instagram";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
+import GameHero from "./animation/GameHero";
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
@@ -34,7 +35,7 @@ export function HeroSection() {
       style={{ height: "100dvh", minHeight: "100dvh" }}
     >
 
-
+      <GameHero />
 
       <VerticalChangingText />
 
