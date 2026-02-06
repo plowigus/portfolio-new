@@ -5,6 +5,11 @@ export class PhysicsSystem {
     public playerBody: Matter.Body | null = null;
     public isTouchingGround: boolean = false;
 
+    // Zmienne do Fixed Timestep
+    private accumulator: number = 0;
+    private readonly fixedStep: number = 1000 / 60; // ~16.66ms (Sztywne 60 FPS dla fizyki)
+    private readonly maxFrameTime: number = 60; // Max 60ms do symulacji na jedną klatkę graficzną (zabezpieczenie przed spiralą śmierci)
+
     constructor() {
         this.engine = Matter.Engine.create();
         this.engine.gravity.y = 0; // Custom gravity handling as per original code
@@ -64,19 +69,33 @@ export class PhysicsSystem {
         }
     }
 
+    // 🛑 GŁÓWNA POPRAWKA: Fixed Timestep z Sub-steppingiem
     public update(delta: number) {
-        // 🛑 FIX: CLAMP DELTA
-        // Ograniczamy deltę do max 2.0 (czyli symulujemy spadek do 30 FPS).
-        // Jeśli Firefox "czknie" i da deltę 5.0, my i tak policzymy tylko 2.0.
-        // To zapobiega "Moon Jump" (wystrzeleniu w kosmos).
-        const safeDelta = Math.min(delta, 2.0);
+        // 1. Konwertujemy delta z Pixi (jednostki klatek) na milisekundy
+        // Pixi zakłada, że delta 1.0 = ~16.66ms (przy 60FPS)
+        let frameTime = delta * 16.66;
 
-        // Standardowy update Matter.js
-        // 16.66ms to baza dla 60FPS. Mnożymy przez bezpieczną deltę.
-        Matter.Engine.update(this.engine, safeDelta * 16.66);
+        // 2. Clamp: Jeśli lag jest potężny (np. przeglądarka spała), ucinamy czas.
+        // Zapobiega to gigantycznym skokom i teleportacji gracza.
+        if (frameTime > this.maxFrameTime) {
+            frameTime = this.maxFrameTime;
+        }
+
+        // 3. Dodajemy czas do akumulatora
+        this.accumulator += frameTime;
+
+        // 4. "Zjadamy" czas w sztywnych kawałkach po 16.66ms
+        // Jeśli gra działa w 120Hz, pętla może się nie wykonać wcale (akumulator czeka).
+        // Jeśli gra działa w 30Hz, pętla wykona się 2 razy (2 * 16.66ms).
+        while (this.accumulator >= this.fixedStep) {
+            Matter.Engine.update(this.engine, this.fixedStep);
+            this.accumulator -= this.fixedStep;
+        }
     }
 
     public cleanup() {
         Matter.Engine.clear(this.engine);
+        // Reset akumulatora przy restarcie
+        this.accumulator = 0;
     }
 }
