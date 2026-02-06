@@ -13,12 +13,14 @@ import { useDeathSequence } from './engine/useDeathSequence';
 export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | null>) => {
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [activeQuote, setActiveQuote] = useState<string | null>(null);
     const [restartKey, setRestartKey] = useState(0);
 
     const { keys, jumpBufferTimer } = useInput();
     const trailsRef = useRef<PIXI.Sprite[]>([]);
 
     const gameState = useRef({
+        // ... (unchanged)
         vx: 0,
         coyoteTimer: 0,
         currentMoveSpeed: GAME_CONFIG.moveSpeed,
@@ -44,6 +46,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
     // Reset Game State on Restart
     useEffect(() => {
         setIsGameOver(false);
+        setActiveQuote(null);
         setScore(0);
         gameState.current = {
             vx: 0,
@@ -69,6 +72,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         trailsRef,
         assetManager: assetManagerRef.current,
         setScore,
+        setActiveQuote,
         keys
     });
 
@@ -142,5 +146,11 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         setRestartKey(prev => prev + 1);
     };
 
-    return { score, isGameOver, restartGame };
+    return {
+        score,
+        isGameOver,
+        activeQuote,
+        assetManagerRef,
+        restartGame
+    };
 };

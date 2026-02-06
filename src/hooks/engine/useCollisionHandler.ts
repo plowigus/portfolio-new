@@ -15,6 +15,7 @@ interface CollisionHandlerProps {
     trailsRef: React.MutableRefObject<PIXI.Sprite[]>;
     assetManager: AssetManager | null;
     setScore: (score: number) => void;
+    setActiveQuote: (quote: string | null) => void;
     keys: React.MutableRefObject<any>;
 }
 
@@ -27,6 +28,7 @@ export const useCollisionHandler = ({
     trailsRef,
     assetManager,
     setScore,
+    setActiveQuote,
     keys
 }: CollisionHandlerProps) => {
 
@@ -106,10 +108,23 @@ export const useCollisionHandler = ({
                 if (coinBody && spawner) {
                     const currentScore = spawner.coins.find(c => c.body === coinBody);
                     if (currentScore && !currentScore.collected) {
-                        currentScore.collected = true;
                         spawner.removeCoin(coinBody);
-                        gameState.current.score += 1;
-                        setScore(gameState.current.score);
+
+                        const newScore = gameState.current.score + 1;
+                        gameState.current.score = newScore;
+                        setScore(newScore);
+
+                        // Talking Head Logic (Every 50 points)
+                        if (newScore > 0 && newScore % 10 === 0) {
+                            const quotes = GAME_CONFIG.SILESIAN_QUOTES;
+                            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                            setActiveQuote(randomQuote);
+
+                            // Auto-hide after duration
+                            setTimeout(() => {
+                                setActiveQuote(null);
+                            }, GAME_CONFIG.quoteDuration);
+                        }
                     }
                 }
 

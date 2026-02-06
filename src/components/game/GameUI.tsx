@@ -1,16 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import Coins from "lucide-react/dist/esm/icons/coins";
 import Noise from '../animation/Noise';
-
+import { TalkingHead } from './TalkingHead';
 
 interface GameUIProps {
     score: number;
     isGameOver: boolean;
     onRestart: () => void;
+    activeQuote: string | null;
+    assetManager: any;
 }
 
-export const GameUI: React.FC<GameUIProps> = ({ score, isGameOver, onRestart }) => {
+export const GameUI: React.FC<GameUIProps> = ({
+    score,
+    isGameOver,
+    onRestart,
+    activeQuote,
+    assetManager
+}) => {
     const [selectedOption, setSelectedOption] = useState<'YES' | 'NO'>('YES');
+
+    // Extract UI textures if available
+    const uiTextures = assetManager?.textures ? {
+        faceClosed: assetManager.textures.faceClosed,
+        faceOpen: assetManager.textures.faceOpen
+    } : null;
 
     // Handle Menu Input
     useEffect(() => {
@@ -42,6 +56,9 @@ export const GameUI: React.FC<GameUIProps> = ({ score, isGameOver, onRestart }) 
     return (
 
         <div className="absolute inset-0 pointer-events-none tracking-widest selection:bg-none overflow-hidden text-white">
+
+            {/* Doom Style Talking Head */}
+            <TalkingHead quote={activeQuote} textures={uiTextures} />
 
             <div className="absolute top-4 left-6 z-20 flex items-center gap-3">
                 <Coins className="w-8 h-8 text-yellow-400 drop-shadow-[2px_2px_0_rgba(0,0,0,1)]" strokeWidth={2.5} />

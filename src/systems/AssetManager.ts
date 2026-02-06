@@ -34,6 +34,7 @@ export class AssetManager {
             PIXI.Assets.load('/assets/obstacles/barrel.png'),
             PIXI.Assets.load('/assets/items/kluski.json'),
             PIXI.Assets.load('/assets/items/kluski.png'),
+            PIXI.Assets.load('/assets/ui/face.png'),
         ]);
 
         // Ensure nearest neighbor scaling for pixel art look
@@ -41,9 +42,27 @@ export class AssetManager {
         barrelTex.source.scaleMode = 'nearest';
         kluskiTex.source.scaleMode = 'nearest';
 
+        // Face slicing
+        const faceTex = await PIXI.Assets.load('/assets/ui/face.png');
+        faceTex.source.scaleMode = 'nearest';
+
+        // Slice face (2 frames, horizontal)
+        const faceW = faceTex.width / 2;
+        const faceH = faceTex.height;
+        const faceClosed = new PIXI.Texture({
+            source: faceTex.source,
+            frame: new PIXI.Rectangle(0, 0, faceW, faceH)
+        });
+        const faceOpen = new PIXI.Texture({
+            source: faceTex.source,
+            frame: new PIXI.Rectangle(faceW, 0, faceW, faceH)
+        });
+
         this.textures = {
             floor: floorTex,
-            background: bgTex
+            background: bgTex,
+            faceClosed,
+            faceOpen
         };
 
         this.animations = {
@@ -54,6 +73,7 @@ export class AssetManager {
             dead: this.parseFrames(deadSheet, deadTex),
             barrel: this.parseFrames(barrelSheet, barrelTex),
             kluska: this.parseFrames(kluskiSheet, kluskiTex),
+            face: [faceClosed, faceOpen] // For easier access if needed
         };
     }
 

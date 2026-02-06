@@ -64,6 +64,22 @@ export const GAME_CONFIG = {
     deathGhostAlpha: 0.6, // Visual transparency
     deathGhostTint: 0xffffff, // Red
     deathTrailIntervalMultiplier: 10, // Spawns trails less frequently than sprint
+
+    // UI & Talking Head
+    faceAnimationSpeed: 150,      // ms per frame
+    quoteDuration: 4000,          // ms
+    SILESIAN_QUOTES: [
+        "Jeronie, ale mosz apetyt!",
+        "Toż to prawdziwy Kluszkożerca!",
+        "Nigdzie nie ma takich klusek jak w Bytomiu!",
+        "Dej pozór! Gumiklejzy!",
+        "Maszno, jak on szkubie te kluski!",
+        "Godej co chcesz, kluski to życie!",
+        "Wcina jakby tydzień nie jadł!",
+        "O pierona, ale tempo!",
+        "Ała, dej se siana z tymi kluskami!",
+        "Fest dobry zawodnik!"
+    ]
 } as const;
 
 export type GameConfig = typeof GAME_CONFIG;
