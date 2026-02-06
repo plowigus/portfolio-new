@@ -8,7 +8,13 @@ export const useInput = () => {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.repeat) return;
-            keys.current[e.code] = true;
+
+            // Map ControlRight to "Sprint"
+            if (e.code === "ShiftRight") {
+                keys.current["Sprint"] = true;
+            } else {
+                keys.current[e.code] = true;
+            }
 
             const isJumpKey = e.code === "ArrowUp" || e.code === "KeyW";
             if (isJumpKey) {
@@ -17,7 +23,11 @@ export const useInput = () => {
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            keys.current[e.code] = false;
+            if (e.code === "ShiftRight") {
+                keys.current["Sprint"] = false;
+            } else {
+                keys.current[e.code] = false;
+            }
         };
 
         window.addEventListener("keydown", handleKeyDown);

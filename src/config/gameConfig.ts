@@ -6,14 +6,16 @@ export const GAME_CONFIG = {
     maxMoveSpeed: 12,
     characterScale: 0.3,
     animationSpeed: 0.25,
-    gravity: 0.22,
+    gravity: 0.26,
     jumpPower: -11,
     groundY: 450 / 2,
     obstacleSpeed: 5,
     spawnMinTime: 60,
     spawnMaxTime: 150,
-    knockbackX: 20,
-    knockbackY: -10,
+    knockbackX: 100, // Barrels (Low)
+    knockbackY: -30,
+    knockbackHighX: 100, // Blue (High)
+    knockbackHighY: -30,
     platformHeight: 100,
     minGap: 240,
     maxGap: 320,
@@ -28,7 +30,7 @@ export const GAME_CONFIG = {
     coinSize: 30, // Keep for fallback or refactor rename
     coinHitbox: 20,
     kluskaScale: 0.13, // 40px / 300px
-    kluskaAnimationSpeed: 0.2,
+    kluskaAnimationSpeed: 0.1,
     kluskaHitbox: 20,
     coinSpawnChance: 0.6,
     maxCoinGroupSize: 5,
@@ -47,7 +49,21 @@ export const GAME_CONFIG = {
     // Obstacle Settings (Barrel)
     barrelScale: 1,
     barrelOffsetX: 0,
-    barrelOffsetY: -400
+    barrelOffsetY: -400,
+
+    // Sprint & Trail Settings
+    sprintSpeed: 12,
+    trailInterval: 4,
+    trailFadeSpeed: 0.05,
+    trailStartAlpha: 0.5,
+    trailTint: 0xffffff,
+
+    // Death Sequence Settings
+    deathSlowMotionScale: 0.2, // 20% speed
+    deathDuration: 180, // Duration units (logic frames)
+    deathGhostAlpha: 0.6, // Visual transparency
+    deathGhostTint: 0xffffff, // Red
+    deathTrailIntervalMultiplier: 10, // Spawns trails less frequently than sprint
 } as const;
 
 export type GameConfig = typeof GAME_CONFIG;

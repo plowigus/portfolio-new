@@ -64,7 +64,11 @@ export class RendererSystem {
 
     public cleanup() {
         if (this.app) {
-            this.app.destroy(true, { children: true, texture: true });
+            try {
+                this.app.destroy(true, { children: true, texture: true });
+            } catch (e) {
+                console.warn("Renderer cleanup error:", e);
+            }
         }
     }
 }
