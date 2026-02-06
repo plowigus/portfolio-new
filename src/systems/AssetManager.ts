@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 
 export class AssetManager {
     public animations: Record<string, PIXI.Texture[]> = {};
+    public textures: Record<string, PIXI.Texture> = {};
 
     public async loadAssets() {
         // Parallel loading of all assets
@@ -10,7 +11,10 @@ export class AssetManager {
             runSheet, runTex,
             jumpSheet, jumpTex,
             slideSheet, slideTex,
-            deadSheet, deadTex
+            deadSheet, deadTex,
+            floorTex,
+            bgTex,
+            barrelSheet, barrelTex
         ] = await Promise.all([
             PIXI.Assets.load('/assets/character/idle.json'),
             PIXI.Assets.load('/assets/character/idle.png'),
@@ -22,7 +26,20 @@ export class AssetManager {
             PIXI.Assets.load('/assets/character/slide.png'),
             PIXI.Assets.load('/assets/character/dead.json'),
             PIXI.Assets.load('/assets/character/dead.png'),
+            PIXI.Assets.load('/assets/textures/texture_16px 555.png'),
+            PIXI.Assets.load('/assets/backgrounds/game_bg.png'),
+            PIXI.Assets.load('/assets/obstacles/barrel.json'),
+            PIXI.Assets.load('/assets/obstacles/barrel.png'),
         ]);
+
+        // Ensure nearest neighbor scaling for pixel art look
+        floorTex.source.scaleMode = 'nearest';
+        barrelTex.source.scaleMode = 'nearest';
+
+        this.textures = {
+            floor: floorTex,
+            background: bgTex
+        };
 
         this.animations = {
             idle: this.parseFrames(idleSheet, idleTex),
@@ -30,6 +47,7 @@ export class AssetManager {
             jump: this.parseFrames(jumpSheet, jumpTex),
             slide: this.parseFrames(slideSheet, slideTex),
             dead: this.parseFrames(deadSheet, deadTex),
+            barrel: this.parseFrames(barrelSheet, barrelTex),
         };
     }
 

@@ -1,13 +1,13 @@
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: false,
-    moveSpeed: 6,
+    debugMode: true,
+    moveSpeed: 7,
     maxMoveSpeed: 12,
     characterScale: 0.3,
     animationSpeed: 0.25,
     gravity: 0.22,
-    jumpPower: -12,
+    jumpPower: -11,
     groundY: 450 / 2,
     obstacleSpeed: 5,
     spawnMinTime: 60,
@@ -34,7 +34,17 @@ export const GAME_CONFIG = {
     coinGapHeight: 150,
     coinLowObsHeight: 150,
     coinHighJumpHeight: 140,
-    coinSlideHeight: -10
+    coinSlideHeight: -10,
+
+    // Background Settings
+    bgScaleMultiplier: 1,
+    bgParallaxSpeed: 0.03,
+    bgOffsetY: 0, // Adjust to lift background up/down
+
+    // Obstacle Settings (Barrel)
+    barrelScale: 1,
+    barrelOffsetX: 0,
+    barrelOffsetY: -400
 } as const;
 
 export type GameConfig = typeof GAME_CONFIG;

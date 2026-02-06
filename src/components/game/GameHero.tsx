@@ -13,7 +13,7 @@ export default function GameHero() {
         <div className="relative w-full max-w-[1080px] mx-auto group">
             <div
                 ref={containerRef}
-                className="relative w-[1080px] h-[450px] mx-auto z-10 overflow-hidden bg-white  rounded-xl "
+                className="relative w-[1080px] h-[450px] mx-auto z-10 overflow-hidden bg-white "
             >
                 <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
                     <Noise patternAlpha={60} patternSize={350} />

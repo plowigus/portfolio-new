@@ -55,7 +55,15 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
             await renderer.init(containerRef.current!);
             await assetManager.loadAssets();
 
-            const spawner = new SpawnerSystem(physics.engine, renderer.app);
+            // Enable sorting for Z-Index management
+            renderer.app.stage.sortableChildren = true;
+
+            const spawner = new SpawnerSystem(
+                physics.engine,
+                renderer.app,
+                assetManager.textures.floor,
+                assetManager.animations
+            );
             spawner.initPlatforms();
 
             physicsRef.current = physics;
@@ -63,12 +71,29 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
             spawnerRef.current = spawner;
             assetManagerRef.current = assetManager;
 
-            // 2. Setup Player
+            // 2. Setup Background (Parallax)
+            const bgTexture = assetManager.textures.background;
+            const background = new PIXI.TilingSprite({
+                texture: bgTexture,
+                width: GAME_CONFIG.width,
+                height: GAME_CONFIG.height
+            });
+
+            // Scaled and Positioned from Config
+            const bgScale = (GAME_CONFIG.height / bgTexture.height) * GAME_CONFIG.bgScaleMultiplier;
+            background.tileScale.set(bgScale);
+            background.tilePosition.y = GAME_CONFIG.bgOffsetY;
+            background.zIndex = 1;
+
+            renderer.app.stage.addChild(background);
+
+            // 3. Setup Player
             physics.createPlayer();
             const character = new PIXI.AnimatedSprite(assetManager.animations.idle);
             character.scale.set(GAME_CONFIG.characterScale);
             character.animationSpeed = GAME_CONFIG.animationSpeed;
             character.anchor.set(0.5);
+            character.zIndex = 4;
             character.play();
             renderer.app.stage.addChild(character);
 
@@ -91,7 +116,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                 console.log("💥 GAME OVER");
             };
 
-            // 3. Collision Logic
+            // 4. Collision Logic
             Matter.Events.on(physics.engine, 'collisionStart', (event) => {
                 event.pairs.forEach((pair) => {
                     const { bodyA, bodyB } = pair;
@@ -136,7 +161,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                 });
             });
 
-            // 4. Game Loop
+            // 5. Game Loop
             renderer.app.ticker.add((ticker) => {
                 if (!physics.playerBody) return;
 
@@ -149,6 +174,9 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                 const logicGameOver = state.isGameOverLogic;
 
                 if (!logicGameOver) {
+                    // Scroll Background (Parallax)
+                    background.tilePosition.x -= state.worldSpeed * delta * GAME_CONFIG.bgParallaxSpeed;
+
                     // Ground check
                     if (physics.isTouchingGround) {
                         state.coyoteTimer = GAME_CONFIG.coyoteTime;
