@@ -1,6 +1,5 @@
 import Matter from 'matter-js';
 
-
 export class PhysicsSystem {
     public engine: Matter.Engine;
     public playerBody: Matter.Body | null = null;
@@ -66,7 +65,15 @@ export class PhysicsSystem {
     }
 
     public update(delta: number) {
-        Matter.Engine.update(this.engine, delta * 16.66);
+        // 🛑 FIX: CLAMP DELTA
+        // Ograniczamy deltę do max 2.0 (czyli symulujemy spadek do 30 FPS).
+        // Jeśli Firefox "czknie" i da deltę 5.0, my i tak policzymy tylko 2.0.
+        // To zapobiega "Moon Jump" (wystrzeleniu w kosmos).
+        const safeDelta = Math.min(delta, 2.0);
+
+        // Standardowy update Matter.js
+        // 16.66ms to baza dla 60FPS. Mnożymy przez bezpieczną deltę.
+        Matter.Engine.update(this.engine, safeDelta * 16.66);
     }
 
     public cleanup() {
