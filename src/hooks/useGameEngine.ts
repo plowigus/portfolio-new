@@ -103,6 +103,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         if (!isReady || !rendererRef.current || !physicsRef.current || !spawnerRef.current) return;
 
         const app = rendererRef.current.app;
+        if (!app.ticker) return;
         const physics = physicsRef.current;
         const spawner = spawnerRef.current;
 
@@ -136,6 +137,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         app.ticker.add(loop);
 
         return () => {
+            // FIX: Bezpieczne usuwanie
             if (app.ticker) {
                 app.ticker.remove(loop);
             }

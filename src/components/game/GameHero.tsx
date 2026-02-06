@@ -22,7 +22,7 @@ export default function GameHero() {
                 className="relative w-[1080px] h-[450px] mx-auto z-10 overflow-hidden bg-white "
             >
                 <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
-                    <Noise patternAlpha={60} patternSize={350} />
+                    <Noise patternAlpha={100} patternSize={350} />
                 </div>
                 <GameUI
                     score={score}

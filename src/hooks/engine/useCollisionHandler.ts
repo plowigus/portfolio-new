@@ -65,29 +65,16 @@ export const useCollisionHandler = ({
         // Apply knockback physics
         if (physics!.playerBody) {
             const isInAir = !physics!.isTouchingGround;
-
-            // 1. Detach from wall (prevent physics engine "spring" effect)
-            // Mid-air collisions need more aggressive detachment
             const detachX = isInAir ? 20 : 5;
             Matter.Body.setPosition(physics!.playerBody, {
                 x: physics!.playerBody.position.x - detachX,
                 y: physics!.playerBody.position.y
             });
-
-            // 2. Physics Neutralization (User Request + Heavy Gravity)
-            // Explicitly kill horizontal momentum instead of relying solely on friction
-            // Ensure we don't float by capping vertical velocity (if rising, stop; if falling, keep falling)
             const vy = Math.min(physics!.playerBody.velocity.y, 0);
             Matter.Body.setVelocity(physics!.playerBody, { x: 0, y: vy });
-
-            Matter.Body.setAngularVelocity(physics!.playerBody, 0);       // Kill rotation
-
-            // Heavy Gravity Mode: Moderate drag (0.2) to feel heavy but NOT float
+            Matter.Body.setAngularVelocity(physics!.playerBody, 0);
             physics!.playerBody.frictionAir = isInAir ? 0.2 : 0.05;
-
-            Matter.Body.setInertia(physics!.playerBody, Infinity);        // Lock rotation
-
-            // 3. Apply normalized impulse from config
+            Matter.Body.setInertia(physics!.playerBody, Infinity);
             Matter.Body.setVelocity(physics!.playerBody, {
                 x: -kx,
                 y: -ky
@@ -114,13 +101,12 @@ export const useCollisionHandler = ({
                         gameState.current.score = newScore;
                         setScore(newScore);
 
-                        // Talking Head Logic (Every 50 points)
-                        if (newScore > 0 && newScore % 10 === 0) {
+
+                        if (newScore > 0 && newScore % 25 === 0) {
                             const quotes = GAME_CONFIG.SILESIAN_QUOTES;
                             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
                             setActiveQuote(randomQuote);
 
-                            // Auto-hide after duration
                             setTimeout(() => {
                                 setActiveQuote(null);
                             }, GAME_CONFIG.quoteDuration);

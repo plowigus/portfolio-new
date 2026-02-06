@@ -73,11 +73,10 @@ export const GAME_CONFIG = {
         "Toż to prawdziwy Kluszkożerca!",
         "Nigdzie nie ma takich klusek jak w Bytomiu!",
         "Dej pozór! Gumiklejzy!",
-        "Maszno, jak on szkubie te kluski!",
+        "Badej, jak on szkubie te kluski!",
         "Godej co chcesz, kluski to życie!",
         "Wcina jakby tydzień nie jadł!",
         "O pierona, ale tempo!",
-        "Ała, dej se siana z tymi kluskami!",
         "Fest dobry zawodnik!"
     ]
 } as const;
