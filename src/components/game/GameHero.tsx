@@ -7,7 +7,13 @@ import { GameUI } from "./GameUI";
 
 export default function GameHero() {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { score, isGameOver, restartGame } = useGameEngine(containerRef);
+    const {
+        score,
+        isGameOver,
+        restartGame,
+        activeQuote,
+        assetManagerRef
+    } = useGameEngine(containerRef);
 
     return (
         <div className="relative w-full max-w-[1080px] mx-auto group">
@@ -22,6 +28,8 @@ export default function GameHero() {
                     score={score}
                     isGameOver={isGameOver}
                     onRestart={restartGame}
+                    activeQuote={activeQuote}
+                    assetManager={assetManagerRef.current}
                 />
             </div>
 
