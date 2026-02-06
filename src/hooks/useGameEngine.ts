@@ -163,6 +163,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
 
             // 5. Game Loop
             renderer.app.ticker.add((ticker) => {
+
                 if (!physics.playerBody) return;
 
                 const delta = ticker.deltaTime;

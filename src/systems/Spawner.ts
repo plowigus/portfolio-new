@@ -129,34 +129,65 @@ export class SpawnerSystem {
         const isHighObstacle = Math.random() > 0.5;
         const type = isHighObstacle ? 'obstacle_high' : 'obstacle_low';
 
+        // Wyliczamy poziom podłogi (góra szarego klocka/tekstury)
+        const groundLevelY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
+
         let sprite: PIXI.Container;
-        let bodyRadius = 20; // Default half-width for body
+        let bodyWidth = 40;
+        let bodyHeight = 40; // Wysokość hitboxa
 
         const startX = GAME_CONFIG.width + 100;
-        // const groundTopYReference = GAME_CONFIG.height - GAME_CONFIG.platformHeight; // 350
-        // const groundTopYReference = GAME_CONFIG.height - 100; // Hardcoded platform height ref or from config if reliable
-        // Actually earlier code used GAME_CONFIG.platformHeight (100).
-        // Let's stick to using Config.
 
-        const offset = isHighObstacle ? GAME_CONFIG.obstacleHighOffset : GAME_CONFIG.obstacleLowOffset;
-        const targetY = (GAME_CONFIG.height - GAME_CONFIG.platformHeight) + offset;
+        // Domyślna pozycja Y dla hitboxa (środek)
+        let bodyY = groundLevelY - (bodyHeight);
 
         if (!isHighObstacle) {
-            // BARREL (Low)
-            const barrel = new PIXI.AnimatedSprite(this.animations.barrel);
-            barrel.animationSpeed = 0.15;
-            barrel.play();
-            barrel.scale.set(GAME_CONFIG.barrelScale);
-            barrel.anchor.set(0.5);
-            barrel.x = GAME_CONFIG.barrelOffsetX;
-            barrel.y = GAME_CONFIG.barrelOffsetY;
-            barrel.zIndex = 3;
+            // --- BARREL (NISKA) ---
+            if (this.animations && this.animations.barrel) {
+                const barrel = new PIXI.AnimatedSprite(this.animations.barrel);
+                barrel.animationSpeed = 0.15;
+                barrel.play();
 
-            sprite = barrel;
-            bodyRadius = 20; // 40px width roughly
+                // 🛠️ POPRAWKA 1: SKALA
+                // Skoro obrazek ma 400px, to scale(3) robi 1200px! Musimy go zmniejszyć.
+                // Celujemy w ok. 60-80px wysokości wizualnej.
+                // 400px * 0.2 = 80px.
+                barrel.scale.set(.68);
+
+                // 🛠️ POPRAWKA 2: KOTWICA NA DOLE
+                // (0.5, 1) oznacza: środek w poziomie, spód w pionie.
+                barrel.anchor.set(0.5, 0.72);
+
+                // 🛠️ POPRAWKA 3: POZYCJA
+                // Skoro kotwica jest na spodzie, stawiamy go idealnie na poziomie podłogi
+                barrel.x = startX;
+                barrel.y = groundLevelY;
+
+                barrel.zIndex = 3;
+                sprite = barrel;
+
+                // Hitbox zostaje standardowy (mały kwadrat u podstawy beczki)
+                bodyWidth = 30;
+                bodyHeight = 40;
+                // Hitbox musi być w połowie swojej wysokości nad ziemią
+                bodyY = groundLevelY - (bodyHeight / 2);
+
+            } else {
+                // Fallback jeśli nie ma animacji
+                const g = new PIXI.Graphics();
+                g.rect(0, 0, 40, 40);
+                g.fill(0xff0000);
+                g.x = startX;
+                g.y = groundLevelY - 20; // Środek
+                g.pivot.set(20, 20);
+                sprite = g;
+            }
 
         } else {
-            // FLYING OBSTACLE (High) - Keep as blue retro block for now
+            // --- WYSOKA PRZESZKODA ---
+            const offset = GAME_CONFIG.obstacleHighOffset; // np. -55
+            const targetY = groundLevelY + offset;
+
             const graphics = new PIXI.Graphics();
             graphics.rect(0, 0, 50, 50);
             graphics.fill(0x0000ff);
@@ -166,29 +197,33 @@ export class SpawnerSystem {
             graphics.zIndex = 3;
 
             sprite = graphics;
-            bodyRadius = 25;
+            bodyWidth = 50;
+            bodyHeight = 50;
+            bodyY = targetY; // Wysokie przeszkody pozycjonujemy względem środka
         }
 
         this.app.stage.addChild(sprite);
 
         const body = Matter.Bodies.rectangle(
             startX,
-            targetY,
-            bodyRadius * 2, bodyRadius * 2,
+            bodyY, // Używamy precyzyjnie wyliczonego środka Y
+            bodyWidth, bodyHeight,
             { isSensor: true, label: type }
         );
+
         Matter.World.add(this.engine.world, body);
         this.obstacles.push({ sprite: sprite, body: body });
 
-        // spawn coins with obstacle
+        // Coiny (bez zmian)
         if (isHighObstacle) {
             if (Math.random() > 0.5) {
-                this.spawnCoinGroup(startX, (GAME_CONFIG.height - GAME_CONFIG.platformHeight), GAME_CONFIG.coinSlideHeight, 'slide');
+                this.spawnCoinGroup(startX, groundLevelY, GAME_CONFIG.coinSlideHeight, 'slide');
             } else {
-                this.spawnCoinGroup(startX, targetY, GAME_CONFIG.coinHighJumpHeight, 'jump');
+                this.spawnCoinGroup(startX, bodyY, GAME_CONFIG.coinHighJumpHeight, 'jump');
             }
         } else {
-            this.spawnCoinGroup(startX, targetY, GAME_CONFIG.coinLowObsHeight, 'jump');
+            // Coin nad beczką
+            this.spawnCoinGroup(startX, bodyY, GAME_CONFIG.coinLowObsHeight, 'jump');
         }
     }
 

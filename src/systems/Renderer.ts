@@ -20,6 +20,9 @@ export class RendererSystem {
         });
 
         container.appendChild(this.app.canvas);
+
+        // 🛠️ POPRAWKA: Ustawiamy bardzo wysoki zIndex, żeby debug był zawsze na wierzchu
+        this.debugGraphics.zIndex = 9999;
         this.app.stage.addChild(this.debugGraphics);
     }
 
@@ -28,11 +31,15 @@ export class RendererSystem {
     }
 
     public renderDebug(bodies: Matter.Body[]) {
-        if (!GAME_CONFIG.debugMode) return;
+        if (!GAME_CONFIG.debugMode) {
+            this.debugGraphics.clear();
+            return;
+        }
 
         this.debugGraphics.clear();
+        // Ramka ekranu
         this.debugGraphics.rect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
-        this.debugGraphics.stroke({ width: 2, color: 0x000000, alpha: 0.1 });
+        this.debugGraphics.stroke({ width: 2, color: 0x00ff00, alpha: 0.3 }); // Zmieniłem na zielony, lepiej widać
 
         bodies.forEach(body => {
             if (body.vertices.length < 1) return;
@@ -45,15 +52,14 @@ export class RendererSystem {
 
             let color = 0x000000;
             if (body.label === 'player') color = 0xff0000;
-            else if (body.label.includes('obstacle')) color = 0xffa500;
+            else if (body.label.includes('obstacle')) color = 0xffff00; // Żółty dla przeszkód
             else if (body.label === 'ground') color = 0x0000ff;
             else if (body.label === 'coin') color = 0xFFD700;
 
             this.debugGraphics.stroke({ width: 2, color: color });
         });
 
-        // Ensure debug is always on top
-        this.app.stage.setChildIndex(this.debugGraphics, this.app.stage.children.length - 1);
+
     }
 
     public cleanup() {
