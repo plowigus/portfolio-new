@@ -70,7 +70,7 @@ export const GAME_CONFIG = {
     quoteDuration: 4000,          // ms
     SILESIAN_QUOTES: [
         "Jeronie, ale mosz apetyt!",
-        "Toż to prawdziwy Kluszkożerca!",
+        "Toż to prawdziwy Kluskożerca!",
         "Nigdzie nie ma takich klusek jak w Bytomiu!",
         "Dej pozór! Gumiklejzy!",
         "Badej, jak on szkubie te kluski!",
