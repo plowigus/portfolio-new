@@ -4,6 +4,7 @@ export class AssetManager {
     public animations: Record<string, PIXI.Texture[]> = {};
     public textures: Record<string, PIXI.Texture> = {};
 
+
     public async loadAssets() {
         // Parallel loading of all assets
         const [
@@ -14,7 +15,8 @@ export class AssetManager {
             deadSheet, deadTex,
             floorTex,
             bgTex,
-            barrelSheet, barrelTex
+            barrelSheet, barrelTex,
+            kluskiSheet, kluskiTex
         ] = await Promise.all([
             PIXI.Assets.load('/assets/character/idle.json'),
             PIXI.Assets.load('/assets/character/idle.png'),
@@ -30,11 +32,14 @@ export class AssetManager {
             PIXI.Assets.load('/assets/backgrounds/game_bg.png'),
             PIXI.Assets.load('/assets/obstacles/barrel.json'),
             PIXI.Assets.load('/assets/obstacles/barrel.png'),
+            PIXI.Assets.load('/assets/items/kluski.json'),
+            PIXI.Assets.load('/assets/items/kluski.png'),
         ]);
 
         // Ensure nearest neighbor scaling for pixel art look
         floorTex.source.scaleMode = 'nearest';
         barrelTex.source.scaleMode = 'nearest';
+        kluskiTex.source.scaleMode = 'nearest';
 
         this.textures = {
             floor: floorTex,
@@ -48,6 +53,7 @@ export class AssetManager {
             slide: this.parseFrames(slideSheet, slideTex),
             dead: this.parseFrames(deadSheet, deadTex),
             barrel: this.parseFrames(barrelSheet, barrelTex),
+            kluska: this.parseFrames(kluskiSheet, kluskiTex),
         };
     }
 

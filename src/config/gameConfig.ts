@@ -25,8 +25,11 @@ export const GAME_CONFIG = {
     jumpBuffer: 8,
     obstacleLowOffset: -25,
     obstacleHighOffset: -45,
-    coinSize: 30,
+    coinSize: 30, // Keep for fallback or refactor rename
     coinHitbox: 20,
+    kluskaScale: 0.13, // 40px / 300px
+    kluskaAnimationSpeed: 0.2,
+    kluskaHitbox: 20,
     coinSpawnChance: 0.6,
     maxCoinGroupSize: 5,
     coinSpacing: 50,

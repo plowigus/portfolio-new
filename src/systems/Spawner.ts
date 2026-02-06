@@ -77,28 +77,40 @@ export class SpawnerSystem {
     }
 
     // --- COINS ---
-    private createCoin(x: number, y: number) {
-        const graphics = new PIXI.Graphics();
-        graphics.circle(0, 0, GAME_CONFIG.coinSize / 2);
-        graphics.fill(0xFFD700);
-        graphics.stroke({ width: 2, color: 0xFFAA00 });
-        graphics.x = x;
-        graphics.y = y;
+    private createCollectible(x: number, y: number) {
+        let sprite: PIXI.Container;
 
-        // Add coin before debug/score (2nd to last usually implies under UI)
-        // Ideally we use Layers or z-index, but childhood logic: child.length - 2
-        // Safe check: length might be small
-        graphics.zIndex = 3;
-        this.app.stage.addChild(graphics);
+        if (this.animations && this.animations.kluska) {
+            const kluska = new PIXI.AnimatedSprite(this.animations.kluska);
+            kluska.animationSpeed = GAME_CONFIG.kluskaAnimationSpeed;
+            kluska.play();
+            kluska.scale.set(GAME_CONFIG.kluskaScale);
+            kluska.anchor.set(0.5);
+            kluska.x = x;
+            kluska.y = y;
+            sprite = kluska;
+        } else {
+            // Fallback
+            const graphics = new PIXI.Graphics();
+            graphics.circle(0, 0, GAME_CONFIG.coinSize / 2);
+            graphics.fill(0xFFD700);
+            graphics.stroke({ width: 2, color: 0xFFAA00 });
+            graphics.x = x;
+            graphics.y = y;
+            sprite = graphics;
+        }
 
-        const body = Matter.Bodies.circle(x, y, GAME_CONFIG.coinHitbox / 2, {
+        sprite.zIndex = 3;
+        this.app.stage.addChild(sprite);
+
+        const body = Matter.Bodies.circle(x, y, GAME_CONFIG.kluskaHitbox, {
             isSensor: true,
             isStatic: true,
-            label: 'coin'
+            label: 'coin' // Keeping label 'coin' to ensure collision logic works
         });
 
         Matter.World.add(this.engine.world, body);
-        this.coins.push({ sprite: graphics, body: body, collected: false });
+        this.coins.push({ sprite: sprite, body: body, collected: false });
     }
 
     public spawnCoinGroup(centerX: number, refY: number, heightOffset: number, type: 'jump' | 'slide') {
@@ -120,7 +132,7 @@ export class SpawnerSystem {
                 yPos += drop;
             }
 
-            this.createCoin(centerX + xOffset, yPos);
+            this.createCollectible(centerX + xOffset, yPos);
         }
     }
 
@@ -156,7 +168,7 @@ export class SpawnerSystem {
 
                 // 🛠️ POPRAWKA 2: KOTWICA NA DOLE
                 // (0.5, 1) oznacza: środek w poziomie, spód w pionie.
-                barrel.anchor.set(0.5, 0.72);
+                barrel.anchor.set(0.4, 0.72);
 
                 // 🛠️ POPRAWKA 3: POZYCJA
                 // Skoro kotwica jest na spodzie, stawiamy go idealnie na poziomie podłogi
