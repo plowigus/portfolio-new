@@ -1,17 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Access environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-    throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-}
+// Public client (for client-side operations if needed, using RLS)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Create a single supabase client for interacting with your database
-// We use the Service Role Key here to bypass RLS for server-side operations like high score submission
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-        persistSession: false, // No need for auth session persistence for admin client
-    },
-});
+// Admin client (for server-side operations, bypassing RLS)
+// Only available if key is present (server-side)
+export const supabaseAdmin = supabaseServiceRoleKey
+    ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+        },
+    })
+    : null;

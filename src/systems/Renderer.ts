@@ -1,21 +1,21 @@
 import * as PIXI from 'pixi.js';
-import Stats from 'stats.js';
+// import Stats from 'stats.js';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 export class RendererSystem {
     public app: PIXI.Application;
     public container: HTMLDivElement | null = null;
     public debugGraphics: PIXI.Graphics;
-    private stats: Stats;
+    // private stats: Stats;
 
     constructor() {
         this.app = new PIXI.Application();
         this.debugGraphics = new PIXI.Graphics();
 
-        this.stats = new Stats();
-        this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-        // Custom styling to ensure visibility
-        this.stats.dom.style.cssText = 'position:absolute;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;';
+        // this.stats = new Stats();
+        // this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+        // // Custom styling to ensure visibility
+        // this.stats.dom.style.cssText = 'position:absolute;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;';
     }
 
     public async init(container: HTMLDivElement) {
@@ -27,7 +27,7 @@ export class RendererSystem {
         });
 
         container.appendChild(this.app.canvas);
-        container.appendChild(this.stats.dom);
+        // container.appendChild(this.stats.dom);
 
         // 🛠️ POPRAWKA: Ustawiamy bardzo wysoki zIndex, żeby debug był zawsze na wierzchu
         this.debugGraphics.zIndex = 9999;
@@ -39,11 +39,11 @@ export class RendererSystem {
     }
 
     public beginFrame() {
-        this.stats.begin();
+        // this.stats.begin();
     }
 
     public endFrame() {
-        this.stats.end();
+        // this.stats.end();
     }
 
     public renderDebug(bodies: Matter.Body[]) {
@@ -84,8 +84,8 @@ export class RendererSystem {
             }
         }
         // Remove stats from DOM
-        if (this.stats.dom.parentElement) {
-            this.stats.dom.parentElement.removeChild(this.stats.dom);
-        }
+        // if (this.stats.dom.parentElement) {
+        //     this.stats.dom.parentElement.removeChild(this.stats.dom);
+        // }
     }
 }
