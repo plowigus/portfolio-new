@@ -1,8 +1,5 @@
-'use client';
-
 import { z } from 'zod'; // Import Zod for validation
-import { supabaseAdmin, supabase } from '@/lib/supabase'; // Import clients
-import { revalidatePath, unstable_noStore as noStore } from 'next/cache'; // Import revalidatePath and noStore
+import { supabase } from '@/lib/supabase'; // Import client
 
 // Define the validation schema for score submission
 const submitScoreSchema = z.object({
@@ -18,6 +15,7 @@ const submitScoreSchema = z.object({
 
 /**
  * Submits a new high score to the database.
+ * NOTE: This relies on Client-Side RLS policies allowing anonymous inserts.
  * @param initials - The player's initials (3 characters, A-Z, 0-9).
  * @param score - The player's score (positive integer).
  * @returns An object containing success status and optional error message.
@@ -34,15 +32,9 @@ export async function submitScore(initials: string, score: number) {
         };
     }
 
-    // Ensure Admin Client is available
-    if (!supabaseAdmin) {
-        console.error('Supabase Admin Client not initialized (Missing Service Role Key).');
-        return { success: false, message: 'Server configuration error.' };
-    }
-
     try {
-        // 2. Insert into Supabase using Admin Client (Bypass RLS)
-        const { error } = await supabaseAdmin
+        // 2. Insert into Supabase using Public Client
+        const { error } = await supabase
             .from('highscores')
             .insert([{ initials: result.data.initials, score: result.data.score }]);
 
@@ -51,8 +43,6 @@ export async function submitScore(initials: string, score: number) {
             return { success: false, message: 'Failed to submit score.' };
         }
 
-        // 3. Revalidate paths to update UI
-        revalidatePath('/');
         return { success: true };
     } catch (err) {
         console.error('Unexpected Error:', err);
@@ -66,11 +56,8 @@ export async function submitScore(initials: string, score: number) {
  * @returns An array of score objects.
  */
 export async function getTopScores(limit: number = 10) {
-    noStore(); // Opt out of static caching to ensure fresh leaderboard data
-
     try {
-        // Read from public client (assuming RLS allows public read)
-        // If not, switch to supabaseAdmin
+        // Read from public client
         const { data, error } = await supabase
             .from('highscores')
             .select('id, initials, score, created_at')
