@@ -1,64 +1,78 @@
-import { z } from 'zod'; // Import Zod for validation
-import { supabase } from '@/lib/supabase'; // Import client
+'use server';
 
-// Define the validation schema for score submission
+import { createClient } from '@supabase/supabase-js';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+
+// Schemat walidacji
 const submitScoreSchema = z.object({
     initials: z
         .string()
-        .length(3, { message: 'Initials must be exactly 3 characters long.' })
-        .regex(/^[A-Z0-9]+$/, { message: 'Initials must be uppercase letters or numbers.' }),
+        .length(3, { message: 'Inicjały muszą mieć dokładnie 3 znaki.' })
+        .regex(/^[A-Z0-9]+$/, { message: 'Tylko duże litery i cyfry.' }),
     score: z
         .number()
-        .int({ message: 'Score must be an integer.' })
-        .positive({ message: 'Score must be a positive number.' }),
+        .int()
+        .positive(),
 });
 
 /**
- * Submits a new high score to the database.
- * NOTE: This relies on Client-Side RLS policies allowing anonymous inserts.
- * @param initials - The player's initials (3 characters, A-Z, 0-9).
- * @param score - The player's score (positive integer).
- * @returns An object containing success status and optional error message.
+ * Zapisuje wynik.
+ * Używa SERVICE_ROLE_KEY, aby ominąć RLS (zapisywanie jako Admin).
  */
 export async function submitScore(initials: string, score: number) {
-    // 1. Validate input using Zod
+    // 1. Walidacja danych wejściowych
     const result = submitScoreSchema.safeParse({ initials, score });
 
     if (!result.success) {
         return {
             success: false,
+            message: 'Błąd walidacji.',
             error: result.error.flatten().fieldErrors,
-            message: 'Validation failed.',
         };
     }
 
     try {
-        // 2. Insert into Supabase using Public Client
-        const { error } = await supabase
+        // 🛑 TU JEST SEKRET: Tworzymy klienta ADMINA tylko na czas tego zapytania.
+        // Dzięki temu 'anon' w przeglądarce nie ma prawa zapisu, ale serwer ma.
+        const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY! // <-- Używamy klucza prywatnego
+        );
+
+        // 2. Insert (jako Admin)
+        const { error } = await supabaseAdmin
             .from('highscores')
             .insert([{ initials: result.data.initials, score: result.data.score }]);
 
         if (error) {
             console.error('Supabase Insert Error:', error);
-            return { success: false, message: 'Failed to submit score.' };
+            return { success: false, message: 'Nie udało się zapisać wyniku.' };
         }
+
+        // 3. Odświeżamy ścieżkę, żeby nowy wynik był widoczny od razu
+        revalidatePath('/');
 
         return { success: true };
     } catch (err) {
         console.error('Unexpected Error:', err);
-        return { success: false, message: 'An unexpected error occurred.' };
+        return { success: false, message: 'Wystąpił nieoczekiwany błąd.' };
     }
 }
 
 /**
- * Retrieves the top high scores from the database.
- * @param limit - The maximum number of scores to retrieve (default: 10).
- * @returns An array of score objects.
+ * Pobiera wyniki.
+ * Tutaj wystarczy zwykły klucz ANON, bo odczyt jest publiczny.
  */
 export async function getTopScores(limit: number = 10) {
     try {
-        // Read from public client
-        const { data, error } = await supabase
+        // Do odczytu używamy klucza publicznego (ANON)
+        const supabasePublic = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
+        const { data, error } = await supabasePublic
             .from('highscores')
             .select('id, initials, score, created_at')
             .order('score', { ascending: false })
