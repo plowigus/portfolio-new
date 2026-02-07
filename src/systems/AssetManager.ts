@@ -6,12 +6,9 @@ export class AssetManager {
 
 
     public async loadAssets() {
-        // Parallel loading of all assets
-        // Check if a key asset is already loaded to avoid re-loading/warnings
+
         if (PIXI.Assets.cache.has('/assets/character/idle.json')) {
-            // Already loaded, just retrieve from cache if needed, or rely on them being in cache.
-            // However, we need to populate this.textures and this.animations.
-            // Let's implement a safe retrieval.
+
         }
 
         const loadSafe = async (path: string) => {

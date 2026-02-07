@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
 interface IntroScreenProps {
     onStartGame: () => void;
@@ -40,10 +41,15 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
     return (
         <div className="absolute inset-0 z-50 flex items-center justify-end bg-black text-white overflow-hidden">
             {/* Background Image */}
-            <div
-                className="absolute inset-0 z-0 bg-cover bg-center"
-                style={{ backgroundImage: "url('/assets/backgrounds/intro-bg.png')" }}
-            />
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src="/assets/backgrounds/intro-bg.png"
+                    alt="Intro Background"
+                    fill
+                    className="object-cover object-center"
+                    priority
+                />
+            </div>
 
             {/* Gradient Overlay for better text readability on the right */}
             <div className="absolute inset-0 z-10 bg-linear-to-r from-transparent via-black/20 to-black/80" />

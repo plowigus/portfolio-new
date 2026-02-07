@@ -156,6 +156,7 @@ export function RetroTalkingAvatar({
                     className="object-contain"
                     style={{ imageRendering: "pixelated" }} // Enforce pixel art look
                     unoptimized // Prevent Next.js from blurring/optimizing pixel art too much
+                    priority
                 />
             </div>
         </div>
