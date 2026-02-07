@@ -1,4 +1,4 @@
-'use server';
+'use client';
 
 import { z } from 'zod'; // Import Zod for validation
 import { supabaseAdmin, supabase } from '@/lib/supabase'; // Import clients
