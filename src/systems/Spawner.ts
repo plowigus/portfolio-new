@@ -5,6 +5,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 export interface GameObject {
     sprite: PIXI.Container;
     body: Matter.Body;
+    offset?: { x: number, y: number }; // Optional offset for visual decoupling
 }
 
 export interface CoinObject extends GameObject {
@@ -14,7 +15,7 @@ export interface CoinObject extends GameObject {
 export class SpawnerSystem {
     private engine: Matter.Engine;
     private app: PIXI.Application;
-    private floorTexture: PIXI.Texture;
+    private textures: Record<string, PIXI.Texture>;
     private animations: Record<string, PIXI.Texture[]>;
 
     public obstacles: GameObject[] = [];
@@ -26,10 +27,10 @@ export class SpawnerSystem {
     public currentSpawnDelay: number = 0;
     public lastPlatformEndX: number = 0;
 
-    constructor(engine: Matter.Engine, app: PIXI.Application, floorTexture: PIXI.Texture, animations: Record<string, PIXI.Texture[]>) {
+    constructor(engine: Matter.Engine, app: PIXI.Application, textures: Record<string, PIXI.Texture>, animations: Record<string, PIXI.Texture[]>) {
         this.engine = engine;
         this.app = app;
-        this.floorTexture = floorTexture;
+        this.textures = textures;
         this.animations = animations;
         this.currentSpawnDelay = this.randomRange(GAME_CONFIG.spawnMinTime, GAME_CONFIG.spawnMaxTime);
     }
@@ -45,7 +46,7 @@ export class SpawnerSystem {
 
         // Use TilingSprite for textured floor
         const sprite = new PIXI.TilingSprite({
-            texture: this.floorTexture,
+            texture: this.textures.floor,
             width: width,
             height: height
         });
@@ -154,8 +155,43 @@ export class SpawnerSystem {
         let bodyY = groundLevelY - (bodyHeight);
 
         if (!isHighObstacle) {
-            // --- BARREL (NISKA) ---
-            if (this.animations && this.animations.barrel) {
+            // --- LOW OBSTACLE: BARREL or TIRES (Opony) ---
+            const spawnOpony = Math.random() > 0.5;
+
+            if (spawnOpony && this.textures.opony) {
+                // --- TIRES (Opony) ---
+                const opony = new PIXI.Sprite(this.textures.opony);
+                opony.scale.set(GAME_CONFIG.oponyScale);
+                opony.anchor.set(0.5, 1.0); // Bottom Center
+
+                // Visual Position with offsets
+                opony.x = startX + GAME_CONFIG.oponyVisualOffsetX;
+                opony.y = groundLevelY + GAME_CONFIG.oponyVisualOffsetY;
+
+                opony.zIndex = 3;
+                sprite = opony;
+
+                // Hitbox Logic - Opony
+                bodyWidth = GAME_CONFIG.oponyHitboxWidth;
+                bodyHeight = GAME_CONFIG.oponyHitboxHeight;
+
+                // Hitbox Position (Matter bodies are centered)
+                // Start at ground, move up by half height, apply offset
+                bodyY = groundLevelY - (bodyHeight / 2) + GAME_CONFIG.oponyHitboxOffsetY;
+
+                // Apply horizontal hitbox offset to startX later in body creation if needed?
+                // Actually body creation uses startX. We need to adjust startX here if we want hitbox offset X.
+                // But wait, body creation below uses `startX + GAME_CONFIG.klopsztangaHitboxOffsetX`.
+                // We should make the body creation generic or handle the X offset there.
+                // For now, let's just rely on body creation using startX and we might need to adjust it there.
+
+                // Let's refactor the body creation slightly to handle variable X offsets if possible, 
+                // or just pass a specific X to body creation.
+                // The current code below uses `startX + GAME_CONFIG.klopsztangaHitboxOffsetX`. 
+                // We need to change that to be generic.
+
+            } else if (this.animations && this.animations.barrel) {
+                // --- BARREL ---
                 const barrel = new PIXI.AnimatedSprite(this.animations.barrel);
                 barrel.animationSpeed = 0.15;
                 barrel.play();
@@ -196,43 +232,90 @@ export class SpawnerSystem {
             }
 
         } else {
-            // --- WYSOKA PRZESZKODA ---
-            const offset = GAME_CONFIG.obstacleHighOffset; // np. -55
-            const targetY = groundLevelY + offset;
+            // --- WYSOKA PRZESZKODA (KLOPSZTANGA) ---
+            const klopsztangaTex = this.textures.klopsztanga;
 
-            const graphics = new PIXI.Graphics();
-            graphics.rect(0, 0, 50, 50);
-            graphics.fill(0x0000ff);
-            graphics.x = startX;
-            graphics.y = targetY;
-            graphics.pivot.set(25, 25);
-            graphics.zIndex = 3;
+            if (klopsztangaTex) {
+                const carpetBeater = new PIXI.Sprite(klopsztangaTex);
+                carpetBeater.anchor.set(0.5, 1.0); // Bottom Center
+                carpetBeater.scale.set(GAME_CONFIG.klopsztangaScale);
 
-            sprite = graphics;
-            bodyWidth = 50;
-            bodyHeight = 50;
-            bodyY = targetY; // Wysokie przeszkody pozycjonujemy względem środka
+                // Position with Visual Offsets
+                carpetBeater.x = startX + GAME_CONFIG.klopsztangaVisualOffsetX;
+                carpetBeater.y = groundLevelY + GAME_CONFIG.klopsztangaVisualOffsetY;
+
+                carpetBeater.zIndex = 1.5;
+
+                sprite = carpetBeater;
+            } else {
+                // Fallback
+                const graphics = new PIXI.Graphics();
+                graphics.rect(0, 0, 50, 120);
+                graphics.fill(0x0000ff);
+                graphics.x = startX;
+                graphics.y = groundLevelY;
+                graphics.pivot.set(25, 120);
+                graphics.zIndex = 3;
+                sprite = graphics;
+            }
+
+            // Hitbox Logic - Carpet part only
+            bodyWidth = GAME_CONFIG.klopsztangaHitboxWidth;
+            bodyHeight = GAME_CONFIG.klopsztangaHitboxHeight;
+
+            // Offset calculation:
+            bodyY = groundLevelY + GAME_CONFIG.klopsztangaHitboxOffsetY;
         }
 
         this.app.stage.addChild(sprite);
 
+        // Calculate Hitbox X Position
+        let hitboxX = startX;
+        if (isHighObstacle) {
+            hitboxX += GAME_CONFIG.klopsztangaHitboxOffsetX;
+        } else {
+            // For low obstacles (Barrel/Opony), we might have different offsets.
+            // Currently Barrel uses 0 implicit offset (startX).
+            // Opony uses GAME_CONFIG.oponyHitboxOffsetX.
+            // We need to know which one we spawned. 
+            // Ideally we'd store the type or offset earlier.
+            // But simpler: if sprite texture is opony, use opony offset?
+            // Or just check if we set up Opony params.
+            // Let's assume if it's NOT high obstacle, check if it's opony.
+            // But we don't have an easy flag here 'isOpony'.
+            // Let's rely on standard 0 for barrel and add opony offset if needed?
+            // Actually, `startX` was used for Barrel.
+            // Let's just use a default 0 and add specific offset if we spawned Opony.
+            // Hacky check: 
+            if (sprite instanceof PIXI.Sprite && sprite.texture === this.textures.opony) {
+                hitboxX += GAME_CONFIG.oponyHitboxOffsetX;
+            }
+        }
+
         const body = Matter.Bodies.rectangle(
-            startX,
-            bodyY, // Używamy precyzyjnie wyliczonego środka Y
+            hitboxX,
+            bodyY,
             bodyWidth, bodyHeight,
             { isSensor: true, label: type }
         );
 
         Matter.World.add(this.engine.world, body);
-        this.obstacles.push({ sprite: sprite, body: body });
 
-        // Coiny (bez zmian)
+        let offset = { x: 0, y: 0 };
+        const isOpony = (sprite instanceof PIXI.Sprite && sprite.texture === this.textures.opony);
+
+        if ((isHighObstacle && this.textures.klopsztanga) || isOpony) {
+            offset = {
+                x: sprite.x - body.position.x,
+                y: sprite.y - body.position.y
+            };
+        }
+
+        this.obstacles.push({ sprite: sprite, body: body, offset: offset });
+
+        // Coiny (always slide for Klopsztanga)
         if (isHighObstacle) {
-            if (Math.random() > 0.5) {
-                this.spawnCoinGroup(startX, groundLevelY, GAME_CONFIG.coinSlideHeight, 'slide');
-            } else {
-                this.spawnCoinGroup(startX, bodyY, GAME_CONFIG.coinHighJumpHeight, 'jump');
-            }
+            this.spawnCoinGroup(startX, groundLevelY, GAME_CONFIG.coinSlideHeight, 'slide');
         } else {
             // Coin nad beczką
             this.spawnCoinGroup(startX, bodyY, GAME_CONFIG.coinLowObsHeight, 'jump');
@@ -308,8 +391,14 @@ export class SpawnerSystem {
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obs = this.obstacles[i];
             Matter.Body.translate(obs.body, { x: -worldSpeed * delta, y: 0 });
-            obs.sprite.x = obs.body.position.x;
-            obs.sprite.y = obs.body.position.y;
+
+            if (obs.offset && (obs.offset.x !== 0 || obs.offset.y !== 0)) {
+                obs.sprite.x = obs.body.position.x + obs.offset.x;
+                obs.sprite.y = obs.body.position.y + obs.offset.y;
+            } else {
+                obs.sprite.x = obs.body.position.x;
+                obs.sprite.y = obs.body.position.y;
+            }
 
             if (obs.sprite.x < -50) {
                 this.app.stage.removeChild(obs.sprite);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+// import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import Github from "lucide-react/dist/esm/icons/github";
 import Linkedin from "lucide-react/dist/esm/icons/linkedin";
 import Instagram from "lucide-react/dist/esm/icons/instagram";
@@ -88,12 +88,12 @@ export function HeroSection() {
         </div>
       </div>
 
-      <div className="absolute bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2">
+      {/* <div className="absolute bottom-24 md:bottom-12 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2">
         <p className="text-xs tracking-widest uppercase text-neutral-500">
           Scroll Down
         </p>
         <ChevronDown className="w-4 h-4 text-neutral-500 animate-bounce" />
-      </div>
+      </div> */}
     </section>
   );
 }

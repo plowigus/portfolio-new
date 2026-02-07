@@ -7,6 +7,20 @@ export class AssetManager {
 
     public async loadAssets() {
         // Parallel loading of all assets
+        // Check if a key asset is already loaded to avoid re-loading/warnings
+        if (PIXI.Assets.cache.has('/assets/character/idle.json')) {
+            // Already loaded, just retrieve from cache if needed, or rely on them being in cache.
+            // However, we need to populate this.textures and this.animations.
+            // Let's implement a safe retrieval.
+        }
+
+        const loadSafe = async (path: string) => {
+            if (PIXI.Assets.cache.has(path)) {
+                return PIXI.Assets.get(path);
+            }
+            return PIXI.Assets.load(path);
+        };
+
         const [
             idleSheet, idleTex,
             runSheet, runTex,
@@ -18,23 +32,23 @@ export class AssetManager {
             barrelSheet, barrelTex,
             kluskiSheet, kluskiTex
         ] = await Promise.all([
-            PIXI.Assets.load('/assets/character/idle.json'),
-            PIXI.Assets.load('/assets/character/idle.png'),
-            PIXI.Assets.load('/assets/character/run.json'),
-            PIXI.Assets.load('/assets/character/run.png'),
-            PIXI.Assets.load('/assets/character/jump.json'),
-            PIXI.Assets.load('/assets/character/jump.png'),
-            PIXI.Assets.load('/assets/character/slide.json'),
-            PIXI.Assets.load('/assets/character/slide.png'),
-            PIXI.Assets.load('/assets/character/dead.json'),
-            PIXI.Assets.load('/assets/character/dead.png'),
-            PIXI.Assets.load('/assets/textures/texture_16px 555.png'),
-            PIXI.Assets.load('/assets/backgrounds/game_bg.png'),
-            PIXI.Assets.load('/assets/obstacles/barrel.json'),
-            PIXI.Assets.load('/assets/obstacles/barrel.png'),
-            PIXI.Assets.load('/assets/items/kluski.json'),
-            PIXI.Assets.load('/assets/items/kluski.png'),
-            PIXI.Assets.load('/assets/ui/face.png'),
+            loadSafe('/assets/character/idle.json'),
+            loadSafe('/assets/character/idle.png'),
+            loadSafe('/assets/character/run.json'),
+            loadSafe('/assets/character/run.png'),
+            loadSafe('/assets/character/jump.json'),
+            loadSafe('/assets/character/jump.png'),
+            loadSafe('/assets/character/slide.json'),
+            loadSafe('/assets/character/slide.png'),
+            loadSafe('/assets/character/dead.json'),
+            loadSafe('/assets/character/dead.png'),
+            loadSafe('/assets/textures/texture_16px 555.png'),
+            loadSafe('/assets/backgrounds/game_bg.png'),
+            loadSafe('/assets/obstacles/barrel.json'),
+            loadSafe('/assets/obstacles/barrel.png'),
+            loadSafe('/assets/items/kluski.json'),
+            loadSafe('/assets/items/kluski.png'),
+            // faceTex loaded separately below
         ]);
 
         // Ensure nearest neighbor scaling for pixel art look
@@ -42,8 +56,14 @@ export class AssetManager {
         barrelTex.source.scaleMode = 'nearest';
         kluskiTex.source.scaleMode = 'nearest';
 
+        const klopsztangaTex = await loadSafe('/assets/obstacles/klopsztanga.png');
+        klopsztangaTex.source.scaleMode = 'nearest';
+
+        const oponyTex = await loadSafe('/assets/obstacles/opony.png');
+        oponyTex.source.scaleMode = 'nearest';
+
         // Face slicing
-        const faceTex = await PIXI.Assets.load('/assets/ui/face.png');
+        const faceTex = await loadSafe('/assets/ui/face.png');
         faceTex.source.scaleMode = 'nearest';
 
         // Slice face (2 frames, horizontal)
@@ -62,7 +82,9 @@ export class AssetManager {
             floor: floorTex,
             background: bgTex,
             faceClosed,
-            faceOpen
+            faceOpen,
+            klopsztanga: klopsztangaTex,
+            opony: oponyTex
         };
 
         this.animations = {

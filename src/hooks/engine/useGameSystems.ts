@@ -33,7 +33,7 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
             const spawner = new SpawnerSystem(
                 physics.engine,
                 renderer.app,
-                assetManager.textures.floor,
+                assetManager.textures,
                 assetManager.animations
             );
             spawner.initPlatforms();

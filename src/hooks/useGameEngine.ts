@@ -10,7 +10,11 @@ import { useCollisionHandler } from './engine/useCollisionHandler';
 import { usePlayerController } from './engine/usePlayerController';
 import { useDeathSequence } from './engine/useDeathSequence';
 
-export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | null>) => {
+export const useGameEngine = (
+    containerRef: React.RefObject<HTMLDivElement | null>,
+    isGameRunning: boolean
+) => {
+    // ... (state init remains same)
     const [score, setScore] = useState(0);
     const [isGameOver, setIsGameOver] = useState(false);
     const [activeQuote, setActiveQuote] = useState<string | null>(null);
@@ -19,8 +23,11 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
     const { keys, jumpBufferTimer } = useInput();
     const trailsRef = useRef<PIXI.Sprite[]>([]);
 
+    // ... (refs remain same)
+
     const gameState = useRef({
         // ... (unchanged)
+        speed: 0,
         vx: 0,
         coyoteTimer: 0,
         currentMoveSpeed: GAME_CONFIG.moveSpeed,
@@ -43,12 +50,13 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         isReady
     } = useGameSystems(containerRef, restartKey);
 
-    // Reset Game State on Restart
+    // ... (useEffect reset remains same)
     useEffect(() => {
         setIsGameOver(false);
         setActiveQuote(null);
         setScore(0);
         gameState.current = {
+            speed: 0, // Add missing prop for TS check if needed, or rely on ...
             vx: 0,
             coyoteTimer: 0,
             currentMoveSpeed: GAME_CONFIG.moveSpeed,
@@ -108,6 +116,8 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         const spawner = spawnerRef.current;
 
         const loop = (ticker: PIXI.Ticker) => {
+            if (!isGameRunning) return; // PAUSE GAME LOOP
+
             rendererRef.current?.beginFrame();
             const delta = ticker.deltaTime;
 
@@ -139,12 +149,11 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         app.ticker.add(loop);
 
         return () => {
-            // FIX: Bezpieczne usuwanie
             if (app.ticker) {
                 app.ticker.remove(loop);
             }
         };
-    }, [isReady, updatePlayer, updateDeath]);
+    }, [isReady, updatePlayer, updateDeath, isGameRunning]); // Added isGameRunning dependency
 
     const restartGame = () => {
         setRestartKey(prev => prev + 1);

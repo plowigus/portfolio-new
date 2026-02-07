@@ -78,7 +78,9 @@ export class RendererSystem {
     public cleanup() {
         if (this.app) {
             try {
-                this.app.destroy(true, { children: true, texture: true });
+                // Modified: Do NOT destroy children or textures, just the app instance.
+                // React strict mode or fast refresh might cause re-mounts, and we want to reuse textures.
+                this.app.destroy(true, { children: true, texture: false, textureSource: false });
             } catch (e) {
                 console.warn("Renderer cleanup error:", e);
             }

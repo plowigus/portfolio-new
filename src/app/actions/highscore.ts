@@ -16,6 +16,8 @@ const submitScoreSchema = z.object({
         .positive(),
 });
 
+// ... (imports remain the same)
+
 export async function submitScore(initials: string, score: number) {
     const result = submitScoreSchema.safeParse({ initials, score });
 
@@ -35,9 +37,11 @@ export async function submitScore(initials: string, score: number) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
 
-        const { error } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin
             .from('highscores')
-            .insert([{ initials: result.data.initials, score: result.data.score }]);
+            .insert([{ initials: result.data.initials, score: result.data.score }])
+            .select('id')
+            .single();
 
         if (error) {
             console.error('Supabase Insert Error:', error);
@@ -45,7 +49,7 @@ export async function submitScore(initials: string, score: number) {
         }
 
         revalidatePath('/');
-        return { success: true };
+        return { success: true, newId: data.id };
     } catch (err) {
         console.error('Unexpected Error:', err);
         return { success: false, message: 'An unexpected error occurred.' };
@@ -64,6 +68,7 @@ export async function getTopScores(limit: number = 10) {
             .from('highscores')
             .select('id, initials, score, created_at')
             .order('score', { ascending: false })
+            .order('created_at', { ascending: true }) // Tie-breaker: First come, first served
             .limit(limit);
 
         if (error) {

@@ -36,8 +36,18 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Thuast';
+  src: url('/fonts/Thuast.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @layer utilities {
   .font-retro {
     font-family: 'Pixeboy', monospace;
+  }
+  .font-thuast {
+    font-family: 'Thuast', serif;
   }
 }

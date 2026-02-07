@@ -7,7 +7,7 @@ export const GAME_CONFIG = {
     characterScale: 0.3,
     animationSpeed: 0.25,
     gravity: 0.52,
-    jumpPower: -11,
+    jumpPower: -12,
     groundY: 450 / 2,
     obstacleSpeed: 5,
     spawnMinTime: 60,
@@ -49,7 +49,29 @@ export const GAME_CONFIG = {
     // Obstacle Settings (Barrel)
     barrelScale: 1,
     barrelOffsetX: 0,
-    barrelOffsetY: -400,
+    barrelOffsetY: -500,
+
+    // Obstacle Settings (Opony - Low)
+    oponyScale: 0.45,
+    oponyHitboxWidth: 40,
+    oponyHitboxHeight: 40,
+    oponyHitboxOffsetX: 0,
+    oponyHitboxOffsetY: 0, // 0 means exactly on ground level (if anchor is bottom)
+    oponyVisualOffsetX: 0,
+    oponyVisualOffsetY: 61,
+
+    // Obstacle Settings (Klopsztanga - High)
+    klopsztangaScale: 0.7,
+
+    // HITBOX (Physics) - Where the player dies
+    klopsztangaHitboxWidth: 40,
+    klopsztangaHitboxHeight: 120,
+    klopsztangaHitboxOffsetX: -30,
+    klopsztangaHitboxOffsetY: -80, // Higher negative value = higher hitbox (gap at bottom)
+
+    // VISUAL (Sprite) - Where the image is drawn
+    klopsztangaVisualOffsetX: 0,   // Shift the image LEFT/RIGHT
+    klopsztangaVisualOffsetY: 70,   // Shift the image UP/DOWN (e.g. to sink legs into ground)
 
     // Sprint & Trail Settings
     sprintSpeed: 12,

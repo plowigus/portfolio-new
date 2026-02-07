@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Navigation } from "@/components/Navigation";
 
 export const metadata: Metadata = {
-  title: "Portfolio - Web Designer & Developer",
+  title: "Patryk Łowigus - Web Designer & Developer",
   description:
     "A bespoke web designer on a mission to elevate value driven brands. Creating elegant visual experiences with meticulous attention to detail.",
 };
