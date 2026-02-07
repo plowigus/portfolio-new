@@ -6,7 +6,7 @@ export const GAME_CONFIG = {
     maxMoveSpeed: 12,
     characterScale: 0.3,
     animationSpeed: 0.25,
-    gravity: 0.26,
+    gravity: 0.52,
     jumpPower: -11,
     groundY: 450 / 2,
     obstacleSpeed: 5,
@@ -64,6 +64,7 @@ export const GAME_CONFIG = {
     deathGhostAlpha: 0.6, // Visual transparency
     deathGhostTint: 0xffffff, // Red
     deathTrailIntervalMultiplier: 10, // Spawns trails less frequently than sprint
+
 
     // UI & Talking Head
     faceAnimationSpeed: 150,      // ms per frame

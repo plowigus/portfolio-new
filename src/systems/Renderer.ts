@@ -1,14 +1,21 @@
 import * as PIXI from 'pixi.js';
+import Stats from 'stats.js';
 import { GAME_CONFIG } from '../config/gameConfig';
 
 export class RendererSystem {
     public app: PIXI.Application;
     public container: HTMLDivElement | null = null;
     public debugGraphics: PIXI.Graphics;
+    private stats: Stats;
 
     constructor() {
         this.app = new PIXI.Application();
         this.debugGraphics = new PIXI.Graphics();
+
+        this.stats = new Stats();
+        this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+        // Custom styling to ensure visibility
+        this.stats.dom.style.cssText = 'position:absolute;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;';
     }
 
     public async init(container: HTMLDivElement) {
@@ -20,6 +27,7 @@ export class RendererSystem {
         });
 
         container.appendChild(this.app.canvas);
+        container.appendChild(this.stats.dom);
 
         // 🛠️ POPRAWKA: Ustawiamy bardzo wysoki zIndex, żeby debug był zawsze na wierzchu
         this.debugGraphics.zIndex = 9999;
@@ -28,6 +36,14 @@ export class RendererSystem {
 
     public get stage() {
         return this.app.stage;
+    }
+
+    public beginFrame() {
+        this.stats.begin();
+    }
+
+    public endFrame() {
+        this.stats.end();
     }
 
     public renderDebug(bodies: Matter.Body[]) {
@@ -52,14 +68,11 @@ export class RendererSystem {
 
             let color = 0x000000;
             if (body.label === 'player') color = 0xff0000;
-            else if (body.label.includes('obstacle')) color = 0xffff00; // Żółty dla przeszkód
+            else if (body.label.includes('obstacle') || body.label.includes('coin')) color = 0xffff00; // Żółty dla przeszkód/monet
             else if (body.label === 'ground') color = 0x0000ff;
-            else if (body.label === 'coin') color = 0xFFD700;
 
             this.debugGraphics.stroke({ width: 2, color: color });
         });
-
-
     }
 
     public cleanup() {
@@ -69,6 +82,10 @@ export class RendererSystem {
             } catch (e) {
                 console.warn("Renderer cleanup error:", e);
             }
+        }
+        // Remove stats from DOM
+        if (this.stats.dom.parentElement) {
+            this.stats.dom.parentElement.removeChild(this.stats.dom);
         }
     }
 }

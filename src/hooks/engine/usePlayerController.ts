@@ -110,7 +110,7 @@ export const usePlayerController = ({
 
         // Physics Handling (Gravity & Grounding)
         let currentVy = playerBody.velocity.y;
-        currentVy += GAME_CONFIG.gravity;
+        currentVy += GAME_CONFIG.gravity * delta;
         if (currentVy > 20) currentVy = 20;
 
         const effectivelyGrounded = state.coyoteTimer > 0;

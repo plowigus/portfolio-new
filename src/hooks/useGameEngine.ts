@@ -108,6 +108,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
         const spawner = spawnerRef.current;
 
         const loop = (ticker: PIXI.Ticker) => {
+            rendererRef.current?.beginFrame();
             const delta = ticker.deltaTime;
 
             // Physics Update
@@ -132,6 +133,7 @@ export const useGameEngine = (containerRef: React.RefObject<HTMLDivElement | nul
                     backgroundRef.current.tilePosition.x -= state.worldSpeed * delta * GAME_CONFIG.bgParallaxSpeed;
                 }
             }
+            rendererRef.current?.endFrame();
         };
 
         app.ticker.add(loop);
