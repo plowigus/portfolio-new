@@ -6,6 +6,7 @@
     "@react-three/cannon": "^6.6.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/three": "^0.182.0",
     "class-variance-authority": "^0.7.1",
@@ -31,7 +32,8 @@
     "tailwind-merge": "*",
     "tailwindcss": "*",
     "three": "^0.182.0",
-    "tone": "^15.1.22"
+    "tone": "^15.1.22",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/matter-js": "^0.20.2",
