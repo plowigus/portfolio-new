@@ -72,7 +72,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                 setIsSubmitting(false);
             }
         }
-    }, [phase, activeIndex, initials, isSubmitting, score, activeIndex]);
+    }, [phase, activeIndex, initials, isSubmitting, score]);
 
     const handleLeaderboardInput = useCallback((e: KeyboardEvent) => {
         if (phase !== 'LEADERBOARD') return;
@@ -163,8 +163,6 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                                 <p className="text-center text-gray-500 py-8">NO SCORES YET</p>
                             ) : (
                                 leaderboard.map((entry, idx) => {
-                                    // Highlight logic: crude matching for now
-                                    // ideally backend returns the ID of the inserted row
                                     const isMe = entry.score === score && entry.initials === initials.join('');
 
                                     return (
