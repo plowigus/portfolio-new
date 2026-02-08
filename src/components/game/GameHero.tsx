@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameEngine } from '@/hooks/useGameEngine';
 import Noise from "@/components/animation/Noise";
 import { GameUI } from "./GameUI";
@@ -9,7 +9,11 @@ import { HighScoreOverlay } from './HighScoreOverlay';
 
 type GameState = 'INTRO' | 'PLAYING' | 'HIGHSCORE_VIEW';
 
-export default function GameHero() {
+interface GameHeroProps {
+    onGameReady?: () => void;
+}
+
+export default function GameHero({ onGameReady }: GameHeroProps) {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const [gameState, setGameState] = useState<GameState>('INTRO');
 
@@ -21,8 +25,15 @@ export default function GameHero() {
         isGameOver,
         restartGame,
         activeQuote,
-        assetManagerRef
+        assetManagerRef,
+        isLoaded
     } = useGameEngine(canvasContainerRef, gameState === 'PLAYING');
+
+    useEffect(() => {
+        if (isLoaded && onGameReady) {
+            onGameReady();
+        }
+    }, [isLoaded, onGameReady]);
 
     const handleStartGame = () => {
 

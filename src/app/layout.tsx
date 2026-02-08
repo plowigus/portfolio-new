@@ -15,6 +15,12 @@ const thuast = localFont({
   weight: "100 900",
 });
 
+const c64 = localFont({
+  src: "./fonts/Commodore-64-v6.3.ttf",
+  variable: "--font-c64",
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "Patryk Łowigus - Web Designer & Developer",
   description:
@@ -28,7 +34,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${pixeboy.variable} ${thuast.variable} antialiased font-sans`}>
+      <body className={`${pixeboy.variable} ${thuast.variable} ${c64.variable} antialiased font-sans`}>
         <div id="root">
           <Navigation />
           {children}

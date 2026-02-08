@@ -5,10 +5,18 @@ import Linkedin from "lucide-react/dist/esm/icons/linkedin";
 import Instagram from "lucide-react/dist/esm/icons/instagram";
 import { VerticalChangingText } from "./VerticalChangingText";
 import { RightDecorativeLine } from "./RightDecorativeLine";
-import GameHero from "./game/GameHero";
+import dynamic from "next/dynamic";
+import C64Loader from "./game/C64Loader";
+
+const GameHero = dynamic(() => import("./game/GameHero"), {
+  ssr: false,
+});
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
+  const [shouldLoadGame, setShouldLoadGame] = useState(false);
+  const [isGameReady, setIsGameReady] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
 
 
   useEffect(() => {
@@ -35,7 +43,29 @@ export function HeroSection() {
       style={{ height: "100dvh", minHeight: "100dvh" }}
     >
 
-      <GameHero />
+      {/* Game Area with JIT Loading */}
+      <div className="relative w-full max-w-[1080px] mx-auto min-h-[450px]">
+        {/* Layer 1: Game (Lazily loaded) */}
+        {shouldLoadGame && (
+          <GameHero onGameReady={() => setIsGameReady(true)} />
+        )}
+
+        {/* Layer 2: C64 Loader (Overlay) */}
+        {showLoader && (
+          <div className="absolute inset-0 z-20">
+            <C64Loader
+              onStartLoading={() => setShouldLoadGame(true)}
+              isGameReady={isGameReady}
+              onComplete={() => setShowLoader(false)}
+            />
+          </div>
+        )}
+
+        {/* Placeholder for when game is loading but GameHero is not yet ready to render (avoids collapse) */}
+        {!shouldLoadGame && !showLoader && (
+          <div className="w-[1080px] h-[450px] bg-black" />
+        )}
+      </div>
 
       <VerticalChangingText />
 

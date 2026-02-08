@@ -164,6 +164,7 @@ export const useGameEngine = (
         isGameOver,
         activeQuote,
         assetManagerRef,
-        restartGame
+        restartGame,
+        isLoaded: isReady
     };
 };

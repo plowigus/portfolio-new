@@ -37,4 +37,8 @@
   .font-thuast {
     font-family: var(--font-thuast), serif;
   }
+
+  .font-c64 {
+    font-family: var(--font-c64), monospace;
+  }
 }
