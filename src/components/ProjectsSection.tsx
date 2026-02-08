@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import ArrowUpRight from "lucide-react/dist/esm/icons/arrow-up-right";
 import Github from "lucide-react/dist/esm/icons/github";
 import {
@@ -90,14 +91,14 @@ function ProjectCard({ project }: { project: Project }) {
 
                     <div className="flex gap-2 opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                         {project.repo && (
-                            <a href={project.repo} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer">
+                            <Link href="https://github.com/plowigus" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer" aria-label="View Source on GitHub">
                                 <Github className="w-5 h-5" />
-                            </a>
+                            </Link>
                         )}
                         {project.link && (
-                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer">
+                            <Link href="https://github.com/plowigus" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer" aria-label="View Live Project">
                                 <ArrowUpRight className="w-5 h-5" />
-                            </a>
+                            </Link>
                         )}
                     </div>
                 </div>
