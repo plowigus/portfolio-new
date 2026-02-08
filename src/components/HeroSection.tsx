@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useEffect, useState } from "react";
 // import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import Github from "lucide-react/dist/esm/icons/github";
@@ -85,30 +86,33 @@ export function HeroSection() {
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-0">
             <div className="flex flex-row gap-6">
-              <a
-                href="https://linkedin.com"
+              <Link
+                href="https://www.linkedin.com/in/patryk-lowigus/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
+                aria-label="Visit Patryk Łowigus' LinkedIn Profile"
               >
                 <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href="https://instagram.com"
+              </Link>
+              <Link
+                href="https://www.instagram.com/plowigus/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
+                aria-label="Visit Patryk Łowigus' Instagram Profile"
               >
                 <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="https://github.com"
+              </Link>
+              <Link
+                href="https://github.com/plowigus/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-700 hover:text-neutral-900 transition-colors cursor-pointer"
+                aria-label="Visit Patryk Łowigus' GitHub Profile"
               >
                 <Github className="w-5 h-5" />
-              </a>
+              </Link>
             </div>
 
             <div className="font-mono text-xs md:text-sm text-neutral-600 uppercase tracking-wider">
