@@ -43,6 +43,7 @@ export function ContactFooter() {
                 <button
                   type="submit"
                   className="ml-4 hover:text-neutral-400 transition-colors cursor-pointer"
+                  aria-label="Send email"
                 >
                   <ArrowRight className="w-5 h-5" />
                 </button>
