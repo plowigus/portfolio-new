@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { GoogleAnalytics } from "@next/third-parties/google";
+// import { GoogleAnalytics } from "@next/third-parties/google";
 import "@/styles/globals.css";
 import { Navigation } from "@/components/Navigation";
+import { CookieBanner } from "@/components/analytics/CookieBanner";
 
 // Konfiguracja fontów
 const pixeboy = localFont({
@@ -109,7 +110,7 @@ export default function RootLayout({
           {children}
         </div>
 
-        <GoogleAnalytics gaId="G-DZRNZ64WYQ" />
+        <CookieBanner gaId="G-DZRNZ64WYQ" />
       </body>
     </html>
   );
