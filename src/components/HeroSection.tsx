@@ -45,6 +45,10 @@ export function HeroSection() {
     >
 
       {/* Game Area with JIT Loading */}
+      <h1 className="sr-only">
+        Silesia Runner - Portfolio Full Stack Developer & Game Creator | Patryk
+        Łowigus
+      </h1>
       <div className="relative w-full max-w-[1080px] mx-auto min-h-[450px]">
         {/* Layer 1: Game (Lazily loaded) */}
         {shouldLoadGame && (
