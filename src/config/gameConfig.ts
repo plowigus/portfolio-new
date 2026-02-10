@@ -22,7 +22,7 @@ export const GAME_CONFIG = {
     jumpPower: -12,
 
     // Camera
-    scrollThresholdX: 500,
+    scrollThresholdX: 200,
     leftBoundary: 40,
     maxFallSpeed: 20,
     friction: 0.9,
@@ -48,8 +48,8 @@ export const GAME_CONFIG = {
             width: 50, height: 50,
             hp: 1,
             attackCooldown: 120, // Strzał co 2 sekundy
-            burstCount: 1,       // Czerwony strzela pojedynczo
-            burstDelay: 0,
+            burstCount: 3,       // Czerwony strzela pojedynczo
+            burstDelay: 50,
             safeEdgeBuffer: 150  // 🆕 Musi być min. 150px od krawędzi platformy
         },
         YELLOW: {
@@ -64,10 +64,10 @@ export const GAME_CONFIG = {
             maxCount: 2
         },
         PROJECTILE: {
-            bulletSpeed: 12,
-            bombSpeed: 18,       // Bardzo szybki spad
-            bombGravity: 2.0,    // Ciężka bomba
-            fizzleTime: 200,     // Szybko znika po uderzeniu w ziemię
+            bulletSpeed: 4,
+            bombSpeed: 4,       // Bardzo szybki spad
+            bombGravity: 0.5,    // Ciężka bomba
+            fizzleTime: 100,     // Szybko znika po uderzeniu w ziemię
             size: 10
         }
     },

@@ -53,7 +53,7 @@ export class EnemyManager {
 
         const graphics = new PIXI.Graphics();
 
-        // Fix: Use simple fill
+        // Simple fill fix
         graphics.rect(0, 0, cfg.width, cfg.height);
         graphics.fill(cfg.color);
 
@@ -69,16 +69,13 @@ export class EnemyManager {
         let isSensor = false;
 
         if (type === 'RED') {
-            // Czerwony stoi w miejscu na platformie
             isStatic = true;
         } else if (type === 'BLUE') {
-            // Niebieski biega i spada (musi mieć fizykę)
             isStatic = false;
             frictionAir = 0.01;
         } else if (type === 'YELLOW') {
-            // Żółty lata (ignorujemy grawitację w update, ale tu ustawiamy jako static/sensor dla uproszczenia kolizji ze światem)
             isStatic = true;
-            isSensor = true; // Sensor żeby nie blokował gracza w powietrzu
+            isSensor = true;
         }
 
         const body = Matter.Bodies.rectangle(
@@ -97,7 +94,6 @@ export class EnemyManager {
         );
 
         if (type === 'BLUE') {
-            // Zapobiegamy przewracaniu się niebieskiego, ale pozwalamy mu spadać
             Matter.Body.setInertia(body, Infinity);
         }
 
@@ -109,7 +105,8 @@ export class EnemyManager {
             type,
             active: true,
             hp: cfg.hp,
-            attackTimer: 0,
+            // 🛠️ FIX: Czerwony startuje z "naładowanym" atakiem, żeby strzelić od razu po pojawieniu się
+            attackTimer: type === 'RED' ? (cfg.attackCooldown || 0) : 0,
             burstShotsRemaining: 0,
             burstCooldown: 0,
         });
@@ -199,32 +196,27 @@ export class EnemyManager {
             const cfg = GAME_CONFIG.ENEMY_CONFIG[enemy.type] as any;
 
             // 1. World Scroll
-            // Przesuwamy wszystkich wrogów razem ze światem
             if (worldSpeed > 0) {
                 Matter.Body.translate(enemy.body, { x: -worldSpeed * delta, y: 0 });
             }
 
             // 2. Behavior
             if (enemy.type === 'BLUE') {
-                // Niebieski biegnie do gracza. 
-                // Używamy setVelocity dla X, ale ZACHOWUJEMY Y (grawitacja).
-                // Dzięki temu jak skończy się platforma, niebieski spadnie.
                 const targetVx = -cfg.baseSpeed;
                 Matter.Body.setVelocity(enemy.body, { x: targetVx, y: enemy.body.velocity.y });
 
             } else if (enemy.type === 'RED') {
-                // Czerwony (Turret)
-                // 1. Sprawdź czy gracz jest z lewej
-                // 2. Sprawdź czy Czerwony jest WIDOCZNY na ekranie (x < width)
+                // Turret Logic
+                // Strzela tylko jak jest widoczny na ekranie (x < width)
                 if (playerX < enemy.body.position.x && enemy.body.position.x < GAME_CONFIG.width) {
                     enemy.attackTimer += delta;
+                    // Dzięki inicjalizacji attackTimer = cooldown, ten warunek spełni się w pierwszej klatce widoczności
                     if (enemy.attackTimer >= cfg.attackCooldown) {
                         enemy.attackTimer = 0;
                         this.spawnBullet(enemy.body.position.x, enemy.body.position.y, playerX);
                     }
                 }
             } else if (enemy.type === 'YELLOW') {
-                // Żółty (Bomber) - automatyczne zrzucanie bomb seriami
                 if (enemy.burstShotsRemaining > 0) {
                     enemy.burstCooldown -= delta;
                     if (enemy.burstCooldown <= 0) {
@@ -249,13 +241,13 @@ export class EnemyManager {
                 enemy.sprite.rotation = enemy.body.angle;
             }
 
-            // Despawn (Left or Bottom)
+            // Despawn
             if (enemy.body.position.y > GAME_CONFIG.height + 200 || enemy.body.position.x < -100) {
                 this.removeEnemy(i);
                 continue;
             }
 
-            // Hit Logic (Player Attack -> Enemy)
+            // Hit Logic
             if (activeHitbox) {
                 const eb = enemy.body.bounds;
                 const overlaps = activeHitbox.x < eb.max.x && activeHitbox.x + activeHitbox.w > eb.min.x &&
@@ -270,7 +262,7 @@ export class EnemyManager {
                 }
             }
 
-            // Player Damage (Body Collision)
+            // Player Damage
             if (Matter.Collision.collides(playerBody, enemy.body)) {
                 if (!gameState.attackState.isPlaying) {
                     const knockDir = playerX < enemy.body.position.x ? -1 : 1;
@@ -294,20 +286,17 @@ export class EnemyManager {
                 proj.sprite.rotation = proj.body.angle;
             }
 
-            // Despawn
             if (proj.body.position.y > GAME_CONFIG.height + 100 || proj.body.position.x < -100) {
                 this.removeProjectile(i);
                 continue;
             }
 
-            // Hit Player
             if (Matter.Collision.collides(playerBody, proj.body)) {
                 gameState.playerHitThisFrame = true;
                 Matter.Body.setVelocity(playerBody, { x: -5, y: -5 });
                 this.removeProjectile(i);
             }
 
-            // Bomb Gravity Assist
             if (proj.type === 'BOMB') {
                 const cfg = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE;
                 if (!proj.body.isStatic) {
