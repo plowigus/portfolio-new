@@ -6,20 +6,31 @@ import { getTopScores } from '@/app/actions/highscore';
 
 interface GameUIProps {
     score: number;
+    lives: number;
     isGameOver: boolean;
     onRestart: () => void;
-    onExit: () => void; // 🛑 NOWY PROP: Funkcja wyjścia do menu
+    onExit: () => void;
     activeQuote: string | null;
     assetManager: any;
+    // Arena Props
+    isArenaActive: boolean;
+    arenaWave: number;
+    currentKills: number;
+    requiredKills: number;
 }
 
 export const GameUI: React.FC<GameUIProps> = ({
     score,
+    lives,
     isGameOver,
     onRestart,
-    onExit, // 🛑 Odbieramy funkcję
+    onExit,
     activeQuote,
-    assetManager
+    assetManager,
+    isArenaActive,
+    arenaWave,
+    currentKills,
+    requiredKills
 }) => {
     const [selectedOption, setSelectedOption] = useState<'YES' | 'NO'>('YES');
     const [showHighScoreFlow, setShowHighScoreFlow] = useState(false);
@@ -46,7 +57,7 @@ export const GameUI: React.FC<GameUIProps> = ({
         fetchGlobalHigh();
     }, []);
 
-    // Game Over -> High Score Check logic...
+    // Game Over Logic ...
     useEffect(() => {
         if (isGameOver) {
             const checkQualification = async () => {
@@ -76,7 +87,7 @@ export const GameUI: React.FC<GameUIProps> = ({
         }
     }, [isGameOver, score]);
 
-    // Handle Menu Input
+    // Input Handling ...
     useEffect(() => {
         if (!isGameOver || showHighScoreFlow || isCheckingScore) return;
 
@@ -94,28 +105,55 @@ export const GameUI: React.FC<GameUIProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isGameOver, selectedOption, onRestart, onExit, showHighScoreFlow, isCheckingScore]); // Dodano onExit do zależności
+    }, [isGameOver, selectedOption, onRestart, onExit, showHighScoreFlow, isCheckingScore]);
 
     return (
         <div className="absolute inset-0 pointer-events-none tracking-widest selection:bg-none overflow-hidden text-white">
 
             <TalkingHead quote={activeQuote} textures={uiTextures} />
 
-            <div className="absolute top-4 left-6 z-20 flex items-center gap-3">
-                <img
-                    src="/assets/items/kluska.gif"
-                    alt="Kluska Coin"
-                    className="w-10 h-10 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] object-contain"
-                    style={{ imageRendering: "pixelated" }}
-                />
-                <span className="text-3xl font-bold drop-shadow-[2px_2px_0_#000]">
-                    {String(score).padStart(3, '0')}
-                </span>
+            {/* Score & Lives */}
+            <div className="absolute top-4 left-6 z-20 flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                    <img
+                        src="/assets/items/kluska.gif"
+                        alt="Kluska Coin"
+                        className="w-10 h-10 drop-shadow-[2px_2px_0_rgba(0,0,0,1)] object-contain"
+                        style={{ imageRendering: "pixelated" }}
+                    />
+                    <span className="text-3xl font-bold drop-shadow-[2px_2px_0_#000]">
+                        {String(score).padStart(3, '0')}
+                    </span>
+                </div>
+
+                <div className="flex gap-1 ml-1">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <span key={i} className="text-xl drop-shadow-[2px_2px_0_#000]" style={{ opacity: i < lives ? 1 : 0.25 }}>
+                            {i < lives ? '❤️' : '🖤'}
+                        </span>
+                    ))}
+                </div>
             </div>
 
+            {/* High Score */}
             <div className="absolute top-4 right-6 z-20 flex items-center gap-3">
                 <span className="text-xl font-bold text-yellow-500 drop-shadow-[2px_2px_0_#000]">HIGH SCORE: {highScore}</span>
             </div>
+
+            {/* --- ARENA HUD (HAJA) --- */}
+            {isArenaActive && !isGameOver && (
+                <div className="absolute top-20 left-0 right-0 flex flex-col items-center z-30 animate-in slide-in-from-top duration-500">
+                    <h2 className="text-6xl font-retro font-black text-red-600 drop-shadow-[4px_4px_0_#000] tracking-widest animate-pulse">
+                        HAJA!
+                    </h2>
+                    <div className="mt-2 text-2xl font-bold text-white drop-shadow-[2px_2px_0_#000] bg-black/50 px-4 py-1 rounded">
+                        FALA {arenaWave}
+                    </div>
+                    <div className="mt-1 text-xl text-yellow-400 drop-shadow-[1px_1px_0_#000]">
+                        WROGOWIE: {currentKills} / {requiredKills}
+                    </div>
+                </div>
+            )}
 
             {/* High Score Overlay */}
             {showHighScoreFlow && (
@@ -127,7 +165,7 @@ export const GameUI: React.FC<GameUIProps> = ({
                 </div>
             )}
 
-            {/* Standard Game Over Screen */}
+            {/* Game Over Screen */}
             {isGameOver && !showHighScoreFlow && !isCheckingScore && (
                 <div className="absolute inset-0 z-50 pointer-events-auto bg-black/80 flex flex-col items-center justify-center">
                     <div className="absolute inset-0 opacity-20 pointer-events-none">

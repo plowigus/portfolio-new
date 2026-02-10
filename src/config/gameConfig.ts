@@ -1,15 +1,79 @@
+// Collision Categories (Powers of 2 bitmasks)
+export const COLLISION_CATEGORIES = {
+    PLAYER: 0x0001,
+    GROUND: 0x0002,
+    ENEMY: 0x0004,
+    PLAYER_ATTACK: 0x0008,
+    ENEMY_PROJECTILE: 0x0010,
+};
+
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: false,
+    debugMode: true,
+    COMMODORE_64_INTRO: false, // Set to true to enable the C64 intro loader
     moveSpeed: 7,
     maxMoveSpeed: 12,
     characterScale: 0.3,
     animationSpeed: 0.25,
     gravity: 0.52,
     jumpPower: -12,
-    groundY: 450 / 2,
-    obstacleSpeed: 5,
+
+    // Camera & Physics
+    scrollThresholdX: 500,     // Pixel X position where the camera starts scrolling
+    leftBoundary: 40,          // Player cannot go further left than this
+    maxFallSpeed: 20,          // Cap physics velocity Y
+    friction: 0.9,             // Friction multiplier
+    deathFallThreshold: 200,   // Y distance below screen to trigger death
+
+    // Arena Settings
+    arenaInterval: 10,         // Kluski collected to trigger arena
+    arenaPlatformWidth: 2500,  // Width of the arena platform
+    rightBoundary: 2040,      // Player limit when camera is locked (approx 2500 - ~460)
+
+    // Player Health
+    maxLives: 3,
+
+    // Arena & Difficulty
+    arenaBaseEnemiesToDefeat: 10,
+    difficultyScaling: 0.2, // 20% speed/spawn rate increase per wave
+
+    // Enemy Settings (Arena)
+    enemySpawnInterval: 120, // Frames between spawns
+    ENEMY_CONFIG: {
+        BLUE: {
+            color: 0x0000FF,
+            baseSpeed: 5,
+            width: 40, height: 50,
+            hp: 1,
+            maxCount: 2
+        },
+        RED: {
+            color: 0xFF0000,
+            width: 50, height: 50,
+            hp: 1,
+            attackCooldown: 180,  // 3s between bursts
+            burstCount: 3,        // Shots per burst
+            burstDelay: 5        // Frames between shots in a burst
+        },
+        YELLOW: {
+            color: 0xFFFF00,
+            speed: 2,
+            width: 80, height: 40,
+            hp: 1,
+            flyHeight: 230,
+            attackCooldown: 120,
+            maxCount: 1           // Max 2 Yellows on screen
+        },
+        PROJECTILE: {
+            bulletSpeed: 12,
+            bombSpeed: 10,
+            bombGravity: 3.5,
+            fizzleTime: 0,
+            size: 10
+        }
+    },
+
     spawnMinTime: 60,
     spawnMaxTime: 150,
     knockbackX: 100, // Barrels (Low)
@@ -102,6 +166,8 @@ export const GAME_CONFIG = {
         "O pierona, ale tempo!",
         "Fest dobry zawodnik!"
     ]
+
+
 } as const;
 
 export type GameConfig = typeof GAME_CONFIG;

@@ -15,18 +15,20 @@ interface GameHeroProps {
 
 export default function GameHero({ onGameReady }: GameHeroProps) {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
-    const [gameState, setGameState] = useState<GameState>('INTRO');
+    const [gameState, setGameState] = useState<GameState>('PLAYING');
 
-    // 🛑 NOWOŚĆ: Flaga sprawdzająca, czy to pierwsza gra w sesji
+    // 🛑 Flaga sprawdzająca, czy to pierwsza gra w sesji
     const hasPlayedRef = useRef(false);
 
     const {
         score,
+        lives,
         isGameOver,
         restartGame,
         activeQuote,
         assetManagerRef,
-        isLoaded
+        isLoaded,
+        arenaState
     } = useGameEngine(canvasContainerRef, gameState === 'PLAYING');
 
     useEffect(() => {
@@ -36,7 +38,6 @@ export default function GameHero({ onGameReady }: GameHeroProps) {
     }, [isLoaded, onGameReady]);
 
     const handleStartGame = () => {
-
         if (hasPlayedRef.current) {
             restartGame();
         }
@@ -79,11 +80,17 @@ export default function GameHero({ onGameReady }: GameHeroProps) {
                 <div className={`${gameState === 'PLAYING' ? 'block' : 'hidden'} w-full h-full relative z-20`}>
                     <GameUI
                         score={score}
+                        lives={lives}
                         isGameOver={isGameOver}
                         onRestart={restartGame}
                         onExit={handleBackToIntro}
                         activeQuote={activeQuote}
                         assetManager={assetManagerRef.current}
+                        // Nowe propsy:
+                        isArenaActive={arenaState.isActive}
+                        arenaWave={arenaState.wave}
+                        currentKills={arenaState.kills}
+                        requiredKills={arenaState.required}
                     />
                 </div>
 

@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { getAnimationFrames } from '../config/characterAnimations';
 
 export class AssetManager {
     public animations: Record<string, PIXI.Texture[]> = {};
@@ -45,6 +46,8 @@ export class AssetManager {
             loadSafe('/assets/obstacles/barrel.png'),
             loadSafe('/assets/items/kluski.json'),
             loadSafe('/assets/items/kluski.png'),
+            loadSafe('/assets/character/kick.png'),
+            loadSafe('/assets/character/punch.png'),
             // faceTex loaded separately below
         ]);
 
@@ -58,6 +61,13 @@ export class AssetManager {
 
         const oponyTex = await loadSafe('/assets/obstacles/opony.png');
         oponyTex.source.scaleMode = 'nearest';
+
+        // Kick and Punch textures
+        const kickTex = await loadSafe('/assets/character/kick.png');
+        kickTex.source.scaleMode = 'nearest';
+
+        const punchTex = await loadSafe('/assets/character/punch.png');
+        punchTex.source.scaleMode = 'nearest';
 
         // Face slicing
         const faceTex = await loadSafe('/assets/ui/face.png');
@@ -92,7 +102,15 @@ export class AssetManager {
             dead: this.parseFrames(deadSheet, deadTex),
             barrel: this.parseFrames(barrelSheet, barrelTex),
             kluska: this.parseFrames(kluskiSheet, kluskiTex),
-            face: [faceClosed, faceOpen] // For easier access if needed
+            face: [faceClosed, faceOpen], // For easier access if needed
+
+            // Combo Animations
+            kickFirst: this.parseFrames(getAnimationFrames('kick', 'kick-first'), kickTex),
+            kickSecond: this.parseFrames(getAnimationFrames('kick', 'kick-second'), kickTex),
+
+            punchFirst: this.parseFrames(getAnimationFrames('punch', 'punch-first'), punchTex),
+            punchSecond: this.parseFrames(getAnimationFrames('punch', 'punch-sec'), punchTex),
+            punchThird: this.parseFrames(getAnimationFrames('punch', 'punch-third'), punchTex),
         };
     }
 
@@ -111,3 +129,4 @@ export class AssetManager {
         return [];
     }
 }
+

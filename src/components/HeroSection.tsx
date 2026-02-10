@@ -13,11 +13,13 @@ const GameHero = dynamic(() => import("./game/GameHero"), {
   ssr: false,
 });
 
+import { GAME_CONFIG } from "@/config/gameConfig";
+
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
-  const [shouldLoadGame, setShouldLoadGame] = useState(false);
+  const [shouldLoadGame, setShouldLoadGame] = useState(!GAME_CONFIG.COMMODORE_64_INTRO);
   const [isGameReady, setIsGameReady] = useState(false);
-  const [showLoader, setShowLoader] = useState(true);
+  const [showLoader, setShowLoader] = useState(GAME_CONFIG.COMMODORE_64_INTRO);
 
 
   useEffect(() => {

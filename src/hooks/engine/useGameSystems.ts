@@ -4,12 +4,14 @@ import { GAME_CONFIG } from '../../config/gameConfig';
 import { PhysicsSystem } from '../../systems/Physics';
 import { RendererSystem } from '../../systems/Renderer';
 import { SpawnerSystem } from '../../systems/Spawner';
+import { EnemyManager } from '../../systems/EnemyManager';
 import { AssetManager } from '../../systems/AssetManager';
 
 export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | null>, restartKey: number) => {
     const physicsRef = useRef<PhysicsSystem | null>(null);
     const rendererRef = useRef<RendererSystem | null>(null);
     const spawnerRef = useRef<SpawnerSystem | null>(null);
+    const enemyManagerRef = useRef<EnemyManager | null>(null);
     const assetManagerRef = useRef<AssetManager | null>(null);
     const backgroundRef = useRef<PIXI.TilingSprite | null>(null);
     const characterRef = useRef<PIXI.AnimatedSprite | null>(null);
@@ -38,9 +40,12 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
             );
             spawner.initPlatforms();
 
+            const enemyManager = new EnemyManager(physics.engine, renderer.app);
+
             physicsRef.current = physics;
             rendererRef.current = renderer;
             spawnerRef.current = spawner;
+            enemyManagerRef.current = enemyManager;
             assetManagerRef.current = assetManager;
 
             const bgTexture = assetManager.textures.background;
@@ -72,14 +77,19 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
         };
 
         const cleanup = () => {
-            if (physicsRef.current) physicsRef.current.cleanup();
-            if (rendererRef.current) rendererRef.current.cleanup();
+            // 1. Najpierw czyścimy Managery (zależne od silnika)
+            if (enemyManagerRef.current) enemyManagerRef.current.cleanup();
             if (spawnerRef.current) spawnerRef.current.cleanup();
 
-            // FIX: Zerujemy referencje, aby uniknąć użycia zniszczonych obiektów
+            // 2. Potem czyścimy systemy bazowe (Renderer niszczy Stage i Textury)
+            if (rendererRef.current) rendererRef.current.cleanup();
+            if (physicsRef.current) physicsRef.current.cleanup();
+
+            // 3. Zerujemy referencje
             physicsRef.current = null;
             rendererRef.current = null;
             spawnerRef.current = null;
+            enemyManagerRef.current = null;
             setIsReady(false);
         };
 
@@ -91,6 +101,7 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
         physicsRef,
         rendererRef,
         spawnerRef,
+        enemyManagerRef,
         assetManagerRef,
         backgroundRef,
         characterRef,

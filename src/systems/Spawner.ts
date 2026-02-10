@@ -26,6 +26,7 @@ export class SpawnerSystem {
     public spawnTimer: number = 0;
     public currentSpawnDelay: number = 0;
     public lastPlatformEndX: number = 0;
+    private forceSpawnX: number | null = null;
 
     constructor(engine: Matter.Engine, app: PIXI.Application, textures: Record<string, PIXI.Texture>, animations: Record<string, PIXI.Texture[]>) {
         this.engine = engine;
@@ -40,7 +41,7 @@ export class SpawnerSystem {
     }
 
     // --- PLATFORMS ---
-    public createPlatform(x: number, width: number): number {
+    public createPlatform(x: number, width: number, label: string = 'ground'): number {
         const height = GAME_CONFIG.platformHeight;
         const y = GAME_CONFIG.height - 50;
 
@@ -65,7 +66,7 @@ export class SpawnerSystem {
             x + width / 2,
             y + height / 2,
             width, height,
-            { isStatic: true, label: 'ground', friction: 0 }
+            { isStatic: true, label: label, friction: 0 }
         );
         Matter.World.add(this.engine.world, body);
         this.platforms.push({ sprite: sprite, body: body });
@@ -75,6 +76,16 @@ export class SpawnerSystem {
 
     public initPlatforms() {
         this.lastPlatformEndX = this.createPlatform(-50, GAME_CONFIG.width + 400);
+    }
+
+    public resetSpawnPosition(x: number) {
+        // Usuwamy wszystkie stare platformy, które są daleko za ekranem
+        this.platforms = this.platforms.filter(p => p.body.position.x > x - 2000);
+
+        // Ustawiamy wymuszony punkt startu dla nowej platformy
+        this.forceSpawnX = x;
+
+        console.log(`🔄 Spawner reset to X: ${x}`);
     }
 
     // --- COINS ---
@@ -323,7 +334,7 @@ export class SpawnerSystem {
     }
 
     // --- UPDATE LOOP ---
-    public update(delta: number, worldSpeed: number) {
+    public update(delta: number, worldSpeed: number, gameState: any) {
         if (worldSpeed <= 0) return;
 
         // 1. Update Platforms
@@ -340,22 +351,54 @@ export class SpawnerSystem {
         }
 
         // Generate Terrain
-        this.lastPlatformEndX -= worldSpeed * delta;
-        if (this.lastPlatformEndX < GAME_CONFIG.width + 100) {
+        // Generate Terrain
+        // Find rightmost platform edge
+        let rightmostX = -1000;
+        this.platforms.forEach(p => {
+            const rightEdge = p.body.position.x + (p.sprite.width / 2);
+            if (rightEdge > rightmostX) rightmostX = rightEdge;
+        });
+
+        // Use forced spawn position if set
+        if (this.forceSpawnX !== null) {
+            rightmostX = this.forceSpawnX;
+            this.forceSpawnX = null;
+        }
+
+        // Sync lastPlatformEndX for compatibility (though we use rightmostX now)
+        this.lastPlatformEndX = rightmostX;
+
+        if (rightmostX < GAME_CONFIG.width + 100) {
             const makeGap = Math.random() > 0.3;
             let gapSize = 0;
-            if (makeGap) {
+
+            if (gameState.isArenaPending) {
+                // --- SPAWN ARENA PLATFORM ---
                 gapSize = this.randomRange(GAME_CONFIG.minGap, GAME_CONFIG.maxGap);
+                const newPlatformX = rightmostX + gapSize;
 
-                // Spawn coins in gap
-                const gapCenterX = this.lastPlatformEndX + (gapSize / 2);
-                const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
-                this.spawnCoinGroup(gapCenterX, groundY, GAME_CONFIG.coinGapHeight, 'jump');
+                console.log("🏰 SPAWNING ARENA PLATFORM!");
+                this.createPlatform(newPlatformX, GAME_CONFIG.arenaPlatformWidth, 'arena-ground');
+
+                // Reset triggers
+                gameState.isArenaPending = false;
+                gameState.kluskiCollectedInCycle = 0;
+
+            } else if (!gameState.isArenaActive) {
+                // --- NORMAL PLATFORM ---
+                if (makeGap) {
+                    gapSize = this.randomRange(GAME_CONFIG.minGap, GAME_CONFIG.maxGap);
+
+                    // Spawn coins in gap
+                    const gapCenterX = rightmostX + (gapSize / 2);
+                    const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
+                    this.spawnCoinGroup(gapCenterX, groundY, GAME_CONFIG.coinGapHeight, 'jump');
+                }
+
+                const newPlatformX = rightmostX + gapSize;
+                const newPlatformWidth = this.randomRange(GAME_CONFIG.minPlatformWidth, GAME_CONFIG.maxPlatformWidth);
+                this.createPlatform(newPlatformX, newPlatformWidth);
             }
-
-            const newPlatformX = this.lastPlatformEndX + gapSize;
-            const newPlatformWidth = this.randomRange(GAME_CONFIG.minPlatformWidth, GAME_CONFIG.maxPlatformWidth);
-            this.lastPlatformEndX = this.createPlatform(newPlatformX, newPlatformWidth);
         }
 
         // 2. Spawn Obstacles
@@ -373,7 +416,9 @@ export class SpawnerSystem {
                 const safeEnd = platEnd - GAME_CONFIG.safeEdgeBuffer;
 
                 if (spawnX > safeStart && spawnX < safeEnd) {
-                    isSafeToSpawn = true;
+                    if (plat.body.label !== 'arena-ground') {
+                        isSafeToSpawn = true;
+                    }
                     break;
                 }
             }
