@@ -10,7 +10,7 @@ export const COLLISION_CATEGORIES = {
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: true,
+    debugMode: false,
     COMMODORE_64_INTRO: false,
 
     // Physics
