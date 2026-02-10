@@ -27,8 +27,7 @@ export default function GameHero({ onGameReady }: GameHeroProps) {
         restartGame,
         activeQuote,
         assetManagerRef,
-        isLoaded,
-        arenaState
+        isLoaded
     } = useGameEngine(canvasContainerRef, gameState === 'PLAYING');
 
     useEffect(() => {
@@ -86,11 +85,6 @@ export default function GameHero({ onGameReady }: GameHeroProps) {
                         onExit={handleBackToIntro}
                         activeQuote={activeQuote}
                         assetManager={assetManagerRef.current}
-                        // Nowe propsy:
-                        isArenaActive={arenaState.isActive}
-                        arenaWave={arenaState.wave}
-                        currentKills={arenaState.kills}
-                        requiredKills={arenaState.required}
                     />
                 </div>
 

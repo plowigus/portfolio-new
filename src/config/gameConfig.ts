@@ -10,8 +10,10 @@ export const COLLISION_CATEGORIES = {
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: false,
-    COMMODORE_64_INTRO: false, // Set to true to enable the C64 intro loader
+    debugMode: true,
+    COMMODORE_64_INTRO: false,
+
+    // Physics
     moveSpeed: 7,
     maxMoveSpeed: 12,
     characterScale: 0.3,
@@ -19,27 +21,20 @@ export const GAME_CONFIG = {
     gravity: 0.52,
     jumpPower: -12,
 
-    // Camera & Physics
-    scrollThresholdX: 500,     // Pixel X position where the camera starts scrolling
-    leftBoundary: 40,          // Player cannot go further left than this
-    maxFallSpeed: 20,          // Cap physics velocity Y
-    friction: 0.9,             // Friction multiplier
-    deathFallThreshold: 200,   // Y distance below screen to trigger death
-
-    // Arena Settings
-    arenaInterval: 10,         // Kluski collected to trigger arena
-    arenaPlatformWidth: 2500,  // Width of the arena platform
-    rightBoundary: 2040,      // Player limit when camera is locked (approx 2500 - ~460)
+    // Camera
+    scrollThresholdX: 500,
+    leftBoundary: 40,
+    maxFallSpeed: 20,
+    friction: 0.9,
+    deathFallThreshold: 200,
 
     // Player Health
     maxLives: 3,
 
-    // Arena & Difficulty
-    arenaBaseEnemiesToDefeat: 10,
-    difficultyScaling: 0.2, // 20% speed/spawn rate increase per wave
+    // Enemy Settings (Zostawiamy, ale bez ustawień fal)
+    enemySpawnChance: 0.4, // Szansa na spawn na platformie
+    yellowSpawnInterval: 300,
 
-    // Enemy Settings (Arena)
-    enemySpawnInterval: 120, // Frames between spawns
     ENEMY_CONFIG: {
         BLUE: {
             color: 0x0000FF,
@@ -52,44 +47,55 @@ export const GAME_CONFIG = {
             color: 0xFF0000,
             width: 50, height: 50,
             hp: 1,
-            attackCooldown: 180,  // 3s between bursts
-            burstCount: 3,        // Shots per burst
-            burstDelay: 5        // Frames between shots in a burst
+            attackCooldown: 120, // Strzał co 2 sekundy
+            burstCount: 1,       // Czerwony strzela pojedynczo
+            burstDelay: 0,
+            safeEdgeBuffer: 150  // 🆕 Musi być min. 150px od krawędzi platformy
         },
         YELLOW: {
             color: 0xFFFF00,
-            speed: 2,
-            width: 80, height: 40,
+            speed: 3,
+            width: 60, height: 40,
             hp: 1,
-            flyHeight: 230,
-            attackCooldown: 120,
-            maxCount: 1           // Max 2 Yellows on screen
+            flyHeight: 280,      // Wysoko nad głową
+            attackCooldown: 180, // Co 3 sekundy seria
+            burstCount: 3,       // 🆕 SERIA 3 BOMBA
+            burstDelay: 15,      // 🆕 Szybkie odstępy (15 klatek = 0.25s)
+            maxCount: 2
         },
         PROJECTILE: {
             bulletSpeed: 12,
-            bombSpeed: 10,
-            bombGravity: 3.5,
-            fizzleTime: 0,
+            bombSpeed: 18,       // Bardzo szybki spad
+            bombGravity: 2.0,    // Ciężka bomba
+            fizzleTime: 200,     // Szybko znika po uderzeniu w ziemię
             size: 10
         }
     },
 
-    spawnMinTime: 60,
+    // Spawner Settings (Bez Areny)
+    // Spawner Settings (Bez Areny)
+    spawnMinTime: 90,
     spawnMaxTime: 150,
-    knockbackX: 100, // Barrels (Low)
-    knockbackY: -30,
-    knockbackHighX: 100, // Blue (High)
-    knockbackHighY: -30,
     platformHeight: 100,
     minGap: 240,
-    maxGap: 320,
-    minPlatformWidth: 400,
-    maxPlatformWidth: 1000,
-    safeEdgeBuffer: 300,
+    maxGap: 380,
+    minPlatformWidth: 650, // Zwiększamy minimum, żeby zmieściły się bufory
+    maxPlatformWidth: 1700,
+
+    // 🆕 NOWE ZMIENNE BEZPIECZEŃSTWA
+    safeEdgeBuffer: 450,   // Margines od krawędzi (było 300 w 'safeEdgeBuffer', ale to dla generowania platform, dodajmy specificzne dla przeszkód)
+    platformEdgeBuffer: 350, // Przeszkoda min. 150px od początku/końca
+    obstacleMinGap: 450,     // Przeszkoda min. 350px od innej przeszkody
+    enemySafeDistance: 400,  // Min distance between enemy and obstacle
+
+    // Visuals & Offsets
     characterVisualOffset: -15,
     coyoteTime: 6,
     jumpBuffer: 8,
-    obstacleLowOffset: -25,
+    knockbackX: 100,
+    knockbackY: -30,
+    knockbackHighX: 100,
+    knockbackHighY: -30,
     obstacleHighOffset: -45,
     coinSize: 30, // Keep for fallback or refactor rename
     coinHitbox: 20,

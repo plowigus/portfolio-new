@@ -18,14 +18,6 @@ export const useGameEngine = (
     const [restartKey, setRestartKey] = useState(0);
     const [lives, setLives] = useState<number>(GAME_CONFIG.maxLives);
 
-    // UI Props for Arena
-    const [arenaState, setArenaState] = useState({
-        isActive: false,
-        wave: 1,
-        kills: 0,
-        required: 5
-    });
-
     const { keys, jumpBufferTimer } = useInput();
     const trailsRef = useRef<PIXI.Sprite[]>([]);
 
@@ -42,14 +34,7 @@ export const useGameEngine = (
         deathTimer: 0,
         attackState: { type: 'none', stage: 0, isPlaying: false, queuedType: 'none' },
         facing: 'right' as 'left' | 'right',
-        kluskiCollectedInCycle: 0,
-        isArenaPending: false,
-        isArenaActive: false,
-        arenaPlatformBody: null as Matter.Body | null,
         lives: GAME_CONFIG.maxLives as number,
-        arenaWave: 1,
-        enemiesDefeatedInArena: 0,
-        requiredKillsForCurrentArena: GAME_CONFIG.arenaBaseEnemiesToDefeat as number,
         playerHitThisFrame: false,
         hurtCooldown: 0,
     });
@@ -71,7 +56,6 @@ export const useGameEngine = (
         setActiveQuote(null);
         setScore(0);
         setLives(GAME_CONFIG.maxLives);
-        setArenaState({ isActive: false, wave: 1, kills: 0, required: GAME_CONFIG.arenaBaseEnemiesToDefeat });
 
         gameState.current = {
             speed: 0,
@@ -86,14 +70,7 @@ export const useGameEngine = (
             deathTimer: 0,
             attackState: { type: 'none', stage: 0, isPlaying: false, queuedType: 'none' },
             facing: 'right' as 'left' | 'right',
-            kluskiCollectedInCycle: 0,
-            isArenaPending: false,
-            isArenaActive: false,
-            arenaPlatformBody: null as Matter.Body | null,
             lives: GAME_CONFIG.maxLives as number,
-            arenaWave: 1,
-            enemiesDefeatedInArena: 0,
-            requiredKillsForCurrentArena: GAME_CONFIG.arenaBaseEnemiesToDefeat as number,
             playerHitThisFrame: false,
             hurtCooldown: 0,
         };
@@ -164,32 +141,8 @@ export const useGameEngine = (
             if (state.hurtCooldown > 0) state.hurtCooldown -= delta;
 
             if (physics.playerBody) {
-                enemyManager.update(delta, physics.playerBody, state);
-            }
-
-            // Sync UI State
-            if (state.isArenaActive) {
-                setArenaState(prev => {
-                    if (
-                        prev.isActive &&
-                        prev.wave === state.arenaWave &&
-                        prev.kills === enemyManager.enemiesDefeated &&
-                        prev.required === state.requiredKillsForCurrentArena
-                    ) {
-                        return prev;
-                    }
-                    return {
-                        isActive: true,
-                        wave: state.arenaWave,
-                        kills: enemyManager.enemiesDefeated,
-                        required: state.requiredKillsForCurrentArena
-                    };
-                });
-            } else {
-                setArenaState(prev => {
-                    if (prev.isActive) return { ...prev, isActive: false };
-                    return prev;
-                });
+                // Enemy Logic (Pass worldSpeed)
+                enemyManager.update(delta, physics.playerBody, state, state.worldSpeed);
             }
 
             // Handle Damage
@@ -202,54 +155,10 @@ export const useGameEngine = (
                 }
             }
 
-            // Arena Win Condition
-            if (state.isArenaActive && enemyManager.enemiesDefeated >= state.requiredKillsForCurrentArena) {
-                state.arenaWave++;
-                state.requiredKillsForCurrentArena = Math.ceil(
-                    GAME_CONFIG.arenaBaseEnemiesToDefeat + (state.arenaWave - 1) * 5
-                );
-
-                // Change arena platform to normal ground to prevent re-lock
-                if (state.arenaPlatformBody) {
-                    state.arenaPlatformBody.label = 'ground';
-
-                    // Calculate arena end to spawn next platforms correctly
-                    // Matter.Body.position.x is center
-                    const arenaRightEdge = state.arenaPlatformBody.position.x + (GAME_CONFIG.arenaPlatformWidth / 2);
-
-                    // Tell spawner to start spawning right after arena
-                    spawner.resetSpawnPosition(arenaRightEdge);
-                }
-
-                state.isArenaActive = false;
-                state.kluskiCollectedInCycle = 0;
-                state.isArenaPending = false;
-                state.enemiesDefeatedInArena = 0;
-
-                enemyManager.enemiesDefeated = 0;
-                enemyManager.cleanup();
-
-                // Snap player to runner position on ground
-                const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
-                if (physics.playerBody) {
-                    Matter.Body.setPosition(physics.playerBody, {
-                        x: GAME_CONFIG.scrollThresholdX,
-                        y: groundY - 40 // Half player height above ground
-                    });
-                    Matter.Body.setVelocity(physics.playerBody, { x: 0, y: 0 });
-                    physics.isTouchingGround = true;
-                }
-
-                state.worldSpeed = GAME_CONFIG.moveSpeed;
-                state.vx = 0;
-
-                state.arenaPlatformBody = null;
-
-                if (GAME_CONFIG.debugMode) console.log(`🏆 WAVE COMPLETE! Resume runner. Collect ${GAME_CONFIG.arenaInterval} more kluski.`);
-            }
-
             if (!state.isGameOverLogic) {
-                spawner.update(delta, state.worldSpeed, state);
+                // Spawner Logic (Pass EnemyManager so it can spawn tactical enemies)
+                spawner.update(delta, state.worldSpeed, enemyManager);
+
                 if (backgroundRef.current) {
                     backgroundRef.current.tilePosition.x -= state.worldSpeed * delta * GAME_CONFIG.bgParallaxSpeed;
                 }
@@ -277,8 +186,6 @@ export const useGameEngine = (
         activeQuote,
         assetManagerRef,
         restartGame,
-        isLoaded: isReady,
-        // Pass Arena Props to UI
-        arenaState
+        isLoaded: isReady
     };
 };

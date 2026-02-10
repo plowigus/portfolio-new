@@ -3,8 +3,6 @@ import Matter from 'matter-js';
 import { GAME_CONFIG, COLLISION_CATEGORIES } from '../config/gameConfig';
 import { PLAYER_CONFIG } from '../config/playerConfig';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 export type EnemyType = 'BLUE' | 'RED' | 'YELLOW';
 
 export interface Enemy {
@@ -16,6 +14,7 @@ export interface Enemy {
     attackTimer: number;
     burstShotsRemaining: number;
     burstCooldown: number;
+    isGrounded?: boolean;
 }
 
 export interface Projectile {
@@ -26,107 +25,80 @@ export interface Projectile {
     groundedTime: number;
 }
 
-// ─── Manager ─────────────────────────────────────────────────────────────────
-
 export class EnemyManager {
     private engine: Matter.Engine;
     private app: PIXI.Application;
     public enemies: Enemy[] = [];
     public projectiles: Projectile[] = [];
-    public enemiesDefeated: number = 0; // Publiczny licznik do GameEngine
-    private spawnTimer: number = 0;
+    public enemiesDefeated: number = 0;
     private debugGraphics: PIXI.Graphics;
 
     constructor(engine: Matter.Engine, app: PIXI.Application) {
         this.engine = engine;
         this.app = app;
-
         this.debugGraphics = new PIXI.Graphics();
         this.debugGraphics.zIndex = 100;
         this.app.stage.addChild(this.debugGraphics);
-
-        this.debugGraphics.zIndex = 100;
-        this.app.stage.addChild(this.debugGraphics);
-
-        // ⚡ SPAWN DELAY: Start with 60 frames (1s) delay before first spawn
-        // (Interval is 120, so starting at 60 means 60 frames left)
-        this.spawnTimer = Math.max(0, GAME_CONFIG.enemySpawnInterval - 60);
     }
 
-    // ─── Spawn Enemy ─────────────────────────────────────────────────────────
-    public spawnEnemy(type: EnemyType, playerX: number) {
-        const cfg = GAME_CONFIG.ENEMY_CONFIG[type];
-        const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
+    /**
+     * Spawn Enemy at specific coordinates (Logic driven by Spawner now)
+     */
+    public spawnEnemyAt(type: EnemyType, x: number, y: number) {
+        const cfg = GAME_CONFIG.ENEMY_CONFIG[type] as any;
 
-        // Limit żółtych
-        if (type === 'YELLOW') {
-            const count = this.enemies.filter(e => e.type === 'YELLOW').length;
-            if (count >= GAME_CONFIG.ENEMY_CONFIG.YELLOW.maxCount) return;
-        }
-
-        // Limit niebieskich
-        if (type === 'BLUE') {
-            const count = this.enemies.filter(e => e.type === 'BLUE').length;
-            if (count >= GAME_CONFIG.ENEMY_CONFIG.BLUE.maxCount) return;
-        }
-
-        let spawnX: number;
-        let spawnY: number;
-
-        if (type === 'YELLOW') {
-            const side = Math.random() > 0.5 ? 1 : -1;
-            spawnX = playerX + side * (200 + Math.random() * 200);
-            spawnY = groundY - GAME_CONFIG.ENEMY_CONFIG.YELLOW.flyHeight;
-        } else if (type === 'RED') {
-            // RED Limit: Max 2 total, Max 1 per side
-            const reds = this.enemies.filter(e => e.type === 'RED');
-            const leftRed = reds.find(e => e.body.position.x < GAME_CONFIG.width / 2);
-            const rightRed = reds.find(e => e.body.position.x > GAME_CONFIG.width / 2);
-
-            let isLeft: boolean;
-
-            if (leftRed && rightRed) return; // Both sides occupied
-            if (leftRed) isLeft = false;      // Left taken -> Force Right
-            else if (rightRed) isLeft = true; // Right taken -> Force Left
-            else isLeft = Math.random() > 0.5; // Both free -> Random
-
-            spawnX = isLeft ? 80 : GAME_CONFIG.width - 80;
-            spawnY = groundY - cfg.height / 2;
-        } else {
-            // BLUE: Always spawn LEFT, run RIGHT
-            spawnX = -50;
-            spawnY = groundY - cfg.height / 2;
-        }
+        // Limits
+        const count = this.enemies.filter(e => e.type === type).length;
+        if (cfg.maxCount && count >= cfg.maxCount) return;
 
         const graphics = new PIXI.Graphics();
+
+        // Fix: Use simple fill
         graphics.rect(0, 0, cfg.width, cfg.height);
         graphics.fill(cfg.color);
+
         graphics.pivot.set(cfg.width / 2, cfg.height / 2);
-        graphics.x = spawnX;
-        graphics.y = spawnY;
-        graphics.zIndex = 5;
+        graphics.x = x;
+        graphics.y = y;
+        graphics.zIndex = 50;
         this.app.stage.addChild(graphics);
 
-        const isSensor = type === 'YELLOW';
-        const isStatic = type === 'RED';
+        let isStatic = false;
+        let frictionAir = 0;
+        let density = 0.001;
+        let isSensor = false;
+
+        if (type === 'RED') {
+            // Czerwony stoi w miejscu na platformie
+            isStatic = true;
+        } else if (type === 'BLUE') {
+            // Niebieski biega i spada (musi mieć fizykę)
+            isStatic = false;
+            frictionAir = 0.01;
+        } else if (type === 'YELLOW') {
+            // Żółty lata (ignorujemy grawitację w update, ale tu ustawiamy jako static/sensor dla uproszczenia kolizji ze światem)
+            isStatic = true;
+            isSensor = true; // Sensor żeby nie blokował gracza w powietrzu
+        }
 
         const body = Matter.Bodies.rectangle(
-            spawnX, spawnY, cfg.width, cfg.height,
+            x, y, cfg.width, cfg.height,
             {
                 isSensor,
                 isStatic,
                 label: `enemy_${type}`,
-                frictionAir: type === 'BLUE' ? 0.01 : 0,
+                frictionAir,
+                density,
                 collisionFilter: {
                     category: COLLISION_CATEGORIES.ENEMY,
                     mask: COLLISION_CATEGORIES.PLAYER | COLLISION_CATEGORIES.GROUND | COLLISION_CATEGORIES.PLAYER_ATTACK,
                 },
             }
         );
-        Matter.Body.setInertia(body, Infinity);
 
-        if (type === 'YELLOW') {
-            Matter.Body.setVelocity(body, { x: 0, y: 0 });
+        if (type === 'BLUE') {
+            // Zapobiegamy przewracaniu się niebieskiego, ale pozwalamy mu spadać
+            Matter.Body.setInertia(body, Infinity);
         }
 
         Matter.World.add(this.engine.world, body);
@@ -142,8 +114,6 @@ export class EnemyManager {
             burstCooldown: 0,
         });
     }
-
-    // ─── Projectiles ─────────────────────────────────────────────────────────
 
     private spawnBullet(x: number, y: number, targetX: number) {
         const pcfg = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE;
@@ -161,7 +131,6 @@ export class EnemyManager {
             label: 'bullet',
             isSensor: true,
             frictionAir: 0,
-            friction: 0,
             collisionFilter: {
                 category: COLLISION_CATEGORIES.ENEMY_PROJECTILE,
                 mask: COLLISION_CATEGORIES.PLAYER | COLLISION_CATEGORIES.GROUND,
@@ -170,7 +139,6 @@ export class EnemyManager {
 
         Matter.Body.setVelocity(body, { x: dir * pcfg.bulletSpeed, y: 0 });
         Matter.World.add(this.engine.world, body);
-
         this.projectiles.push({ body, sprite: graphics, type: 'BULLET', active: true, groundedTime: -1 });
     }
 
@@ -198,222 +166,152 @@ export class EnemyManager {
         });
 
         Matter.Body.setVelocity(body, { x: 0, y: (pcfg as any).bombSpeed || 10 });
-
         Matter.World.add(this.engine.world, body);
 
         this.projectiles.push({ body, sprite: graphics, type: 'BOMB', active: true, groundedTime: -1 });
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────
+    public update(delta: number, playerBody: Matter.Body, gameState: any, worldSpeed: number = 0) {
+        if (this.debugGraphics) this.debugGraphics.clear();
 
-    public update(delta: number, playerBody: Matter.Body, gameState: any) {
-        const currentWave = gameState.arenaWave || 1;
-        const waveMultiplier = 1 + (currentWave - 1) * GAME_CONFIG.difficultyScaling;
-
-        // Debug Hitbox Clear
-        if (this.debugGraphics && !this.debugGraphics.destroyed) {
-            this.debugGraphics.clear();
-        }
-
-        // --- ATTACK HITBOX LOGIC ---
+        // Debug Hitbox Logic
         let activeHitbox: { x: number; y: number; w: number; h: number } | null = null;
         if (gameState.attackState.isPlaying) {
             const attackType = gameState.attackState.type === 'kick' ? 'KICK' : 'PUNCH';
             const config = PLAYER_CONFIG[attackType];
-
             if (config && config.attackHitbox) {
                 const hb = config.attackHitbox;
                 const facingDir = gameState.facing === 'left' ? -1 : 1;
-                const hitboxX = playerBody.position.x + (hb.offsetX * facingDir);
-                const hitboxY = playerBody.position.y + hb.offsetY;
-
                 activeHitbox = {
-                    x: hitboxX - hb.width / 2,
-                    y: hitboxY - hb.height / 2,
+                    x: playerBody.position.x + (hb.offsetX * facingDir) - hb.width / 2,
+                    y: playerBody.position.y + hb.offsetY - hb.height / 2,
                     w: hb.width,
-                    h: hb.height,
+                    h: hb.height
                 };
-
-                if (GAME_CONFIG.debugMode && this.debugGraphics && !this.debugGraphics.destroyed) {
-                    this.debugGraphics.rect(activeHitbox.x, activeHitbox.y, activeHitbox.w, activeHitbox.h);
-                    this.debugGraphics.fill({ color: 0xff0000, alpha: 0.5 });
-                }
-            }
-        }
-
-        // --- SPAWN LOGIC ---
-        if (gameState.isArenaActive) {
-            this.spawnTimer += delta;
-
-            // ⚡ AGRESSIVE SPAWN: If few enemies, spawn faster!
-            let currentSpawnInterval = GAME_CONFIG.enemySpawnInterval / waveMultiplier;
-            if (this.enemies.length < 3) {
-                currentSpawnInterval = 30; // Very fast (0.5s at 60fps logic) start
-            }
-
-            if (this.spawnTimer >= currentSpawnInterval) {
-                this.spawnTimer = 0;
-                // Limit concurrent enemies (e.g. max 8) to avoid chaos
-                if (this.enemies.length < 8) {
-                    const roll = Math.random();
-                    let type: EnemyType;
-                    if (roll < 0.5) type = 'BLUE';
-                    else if (roll < 0.8) type = 'RED';
-                    else type = 'YELLOW';
-                    this.spawnEnemy(type, playerBody.position.x);
-                }
             }
         }
 
         const playerX = playerBody.position.x;
-        const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
 
         // --- ENEMY LOOP ---
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
+            const cfg = GAME_CONFIG.ENEMY_CONFIG[enemy.type] as any;
 
-            // AI
+            // 1. World Scroll
+            // Przesuwamy wszystkich wrogów razem ze światem
+            if (worldSpeed > 0) {
+                Matter.Body.translate(enemy.body, { x: -worldSpeed * delta, y: 0 });
+            }
+
+            // 2. Behavior
             if (enemy.type === 'BLUE') {
-                const blueSpeed = GAME_CONFIG.ENEMY_CONFIG.BLUE.baseSpeed * waveMultiplier;
-                // Run Left -> Right
-                Matter.Body.setVelocity(enemy.body, { x: blueSpeed, y: enemy.body.velocity.y });
+                // Niebieski biegnie do gracza. 
+                // Używamy setVelocity dla X, ale ZACHOWUJEMY Y (grawitacja).
+                // Dzięki temu jak skończy się platforma, niebieski spadnie.
+                const targetVx = -cfg.baseSpeed;
+                Matter.Body.setVelocity(enemy.body, { x: targetVx, y: enemy.body.velocity.y });
 
-                // Despawn if off-screen RIGHT
-                if (enemy.body.position.x > GAME_CONFIG.width + 100) {
-                    this.removeEnemy(i);
-                    // Do not count as defeated? Or just respawn logic handles it?
-                    // "Poźniej są niszczone i za chwile znowu się pojawiają" -> just despawn.
-                    continue;
-                }
             } else if (enemy.type === 'RED') {
-                // Burst Fire Logic
-                if (enemy.burstShotsRemaining > 0) {
-                    enemy.burstCooldown -= delta;
-                    if (enemy.burstCooldown <= 0) {
-                        enemy.burstCooldown = GAME_CONFIG.ENEMY_CONFIG.RED.burstDelay;
-                        enemy.burstShotsRemaining--;
-                        this.spawnBullet(enemy.body.position.x, enemy.body.position.y, playerX);
-                    }
-                } else {
+                // Czerwony (Turret)
+                // 1. Sprawdź czy gracz jest z lewej
+                // 2. Sprawdź czy Czerwony jest WIDOCZNY na ekranie (x < width)
+                if (playerX < enemy.body.position.x && enemy.body.position.x < GAME_CONFIG.width) {
                     enemy.attackTimer += delta;
-                    if (enemy.attackTimer >= GAME_CONFIG.ENEMY_CONFIG.RED.attackCooldown) {
+                    if (enemy.attackTimer >= cfg.attackCooldown) {
                         enemy.attackTimer = 0;
-                        enemy.burstShotsRemaining = GAME_CONFIG.ENEMY_CONFIG.RED.burstCount;
-                        enemy.burstCooldown = 0;
+                        this.spawnBullet(enemy.body.position.x, enemy.body.position.y, playerX);
                     }
                 }
             } else if (enemy.type === 'YELLOW') {
-                // Flying Logic
-                const yCfg = GAME_CONFIG.ENEMY_CONFIG.YELLOW;
-                const targetX = playerX;
-                const currentX = enemy.body.position.x;
-                const lerpX = currentX + (targetX - currentX) * 0.02 * delta;
-                const flyY = groundY - yCfg.flyHeight;
-                Matter.Body.setPosition(enemy.body, { x: lerpX, y: flyY });
-                Matter.Body.setVelocity(enemy.body, { x: 0, y: 0 }); // Stay static in air
-
-                enemy.attackTimer += delta;
-                if (enemy.attackTimer >= yCfg.attackCooldown) {
-                    enemy.attackTimer = 0;
-                    this.spawnBomb(enemy.body.position.x, enemy.body.position.y + yCfg.height / 2 + 5);
+                // Żółty (Bomber) - automatyczne zrzucanie bomb seriami
+                if (enemy.burstShotsRemaining > 0) {
+                    enemy.burstCooldown -= delta;
+                    if (enemy.burstCooldown <= 0) {
+                        enemy.burstCooldown = cfg.burstDelay || 15;
+                        enemy.burstShotsRemaining--;
+                        this.spawnBomb(enemy.body.position.x, enemy.body.position.y + cfg.height / 2 + 5);
+                    }
+                } else {
+                    enemy.attackTimer += delta;
+                    if (enemy.attackTimer >= cfg.attackCooldown) {
+                        enemy.attackTimer = 0;
+                        enemy.burstShotsRemaining = cfg.burstCount || 3;
+                        enemy.burstCooldown = 0;
+                    }
                 }
             }
 
-            // Sprite Sync
-            if (enemy.sprite && !enemy.sprite.destroyed) {
+            // Sync Sprite
+            if (enemy.sprite) {
                 enemy.sprite.x = enemy.body.position.x;
                 enemy.sprite.y = enemy.body.position.y;
+                enemy.sprite.rotation = enemy.body.angle;
             }
 
-            // COMBAT: Player Hit Enemy (Attack)
+            // Despawn (Left or Bottom)
+            if (enemy.body.position.y > GAME_CONFIG.height + 200 || enemy.body.position.x < -100) {
+                this.removeEnemy(i);
+                continue;
+            }
+
+            // Hit Logic (Player Attack -> Enemy)
             if (activeHitbox) {
                 const eb = enemy.body.bounds;
-                const overlaps =
-                    activeHitbox.x < eb.max.x &&
-                    activeHitbox.x + activeHitbox.w > eb.min.x &&
-                    activeHitbox.y < eb.max.y &&
-                    activeHitbox.y + activeHitbox.h > eb.min.y;
-
+                const overlaps = activeHitbox.x < eb.max.x && activeHitbox.x + activeHitbox.w > eb.min.x &&
+                    activeHitbox.y < eb.max.y && activeHitbox.y + activeHitbox.h > eb.min.y;
                 if (overlaps) {
-                    enemy.hp -= 1;
+                    enemy.hp--;
                     if (enemy.hp <= 0) {
                         this.removeEnemy(i);
-                        this.enemiesDefeated++; // Zliczamy zabójstwo!
-                        if (GAME_CONFIG.debugMode) console.log(`💥 ${enemy.type} DESTROYED! (${this.enemiesDefeated} total)`);
+                        this.enemiesDefeated++;
                         continue;
                     }
                 }
             }
 
-            // COMBAT: Enemy Hit Player (Body Collision)
-            // FIX: Blue enemies now deal damage
-            if (enemy.type === 'BLUE' && Matter.Collision.collides(playerBody, enemy.body)) {
+            // Player Damage (Body Collision)
+            if (Matter.Collision.collides(playerBody, enemy.body)) {
                 if (!gameState.attackState.isPlaying) {
                     const knockDir = playerX < enemy.body.position.x ? -1 : 1;
                     Matter.Body.setVelocity(playerBody, { x: knockDir * 10, y: -5 });
-                    // Flag damage for main loop
                     gameState.playerHitThisFrame = true;
                 }
             }
         }
 
-        // --- PROJECTILE LOOP ---
-        const now = Date.now();
-        const fizzleTime = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE.fizzleTime;
-
+        // --- PROJECTILES ---
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const proj = this.projectiles[i];
 
-            if (proj.sprite && !proj.sprite.destroyed) {
+            if (worldSpeed > 0) {
+                Matter.Body.translate(proj.body, { x: -worldSpeed * delta, y: 0 });
+            }
+
+            if (proj.sprite) {
                 proj.sprite.x = proj.body.position.x;
                 proj.sprite.y = proj.body.position.y;
                 proj.sprite.rotation = proj.body.angle;
             }
 
-            // Check Player Collision
-            if (Matter.Collision.collides(playerBody, proj.body)) {
-                const knockDir = playerX < proj.body.position.x ? -1 : 1;
-                Matter.Body.setVelocity(playerBody, { x: knockDir * 8, y: -3 });
-                gameState.playerHitThisFrame = true; // Deal Damage
+            // Despawn
+            if (proj.body.position.y > GAME_CONFIG.height + 100 || proj.body.position.x < -100) {
                 this.removeProjectile(i);
                 continue;
             }
 
+            // Hit Player
+            if (Matter.Collision.collides(playerBody, proj.body)) {
+                gameState.playerHitThisFrame = true;
+                Matter.Body.setVelocity(playerBody, { x: -5, y: -5 });
+                this.removeProjectile(i);
+            }
+
+            // Bomb Gravity Assist
             if (proj.type === 'BOMB') {
-                // Manual gravity for sensor bomb
+                const cfg = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE;
                 if (!proj.body.isStatic) {
-                    const currentVy = proj.body.velocity.y;
-                    Matter.Body.setVelocity(proj.body, { x: 0, y: currentVy + GAME_CONFIG.ENEMY_CONFIG.PROJECTILE.bombGravity * 0.1 });
-                }
-                // Ground logic
-                const bombBottom = proj.body.position.y + GAME_CONFIG.ENEMY_CONFIG.PROJECTILE.size;
-                if (bombBottom >= groundY) {
-                    if (proj.groundedTime < 0) {
-                        proj.groundedTime = now;
-                        Matter.Body.setPosition(proj.body, {
-                            x: proj.body.position.x,
-                            y: groundY - GAME_CONFIG.ENEMY_CONFIG.PROJECTILE.size
-                        });
-                        Matter.Body.setVelocity(proj.body, { x: 0, y: 0 });
-                        Matter.Body.setStatic(proj.body, true);
-                    }
-                    if (now - proj.groundedTime >= fizzleTime) {
-                        this.removeProjectile(i);
-                        continue;
-                    }
-                }
-                if (proj.body.position.y > GAME_CONFIG.height + 100) {
-                    this.removeProjectile(i);
-                    continue;
-                }
-            } else if (proj.type === 'BULLET') {
-                if (proj.body.position.x < -100 || proj.body.position.x > GAME_CONFIG.width + 100) {
-                    this.removeProjectile(i);
-                    continue;
-                }
-                if (proj.body.position.y >= groundY) {
-                    this.removeProjectile(i);
-                    continue;
+                    Matter.Body.applyForce(proj.body, proj.body.position, { x: 0, y: (cfg as any).bombGravity * 0.001 });
                 }
             }
         }
@@ -421,42 +319,24 @@ export class EnemyManager {
 
     public removeEnemy(index: number) {
         if (index < 0 || index >= this.enemies.length) return;
-        const enemy = this.enemies[index];
-        if (enemy.sprite && !enemy.sprite.destroyed) {
-            this.app.stage.removeChild(enemy.sprite);
-            enemy.sprite.destroy();
-        }
-        if (enemy.body) Matter.World.remove(this.engine.world, enemy.body);
+        const e = this.enemies[index];
+        if (e.sprite) { this.app.stage.removeChild(e.sprite); e.sprite.destroy(); }
+        Matter.World.remove(this.engine.world, e.body);
         this.enemies.splice(index, 1);
     }
 
-    private removeProjectile(index: number) {
+    public removeProjectile(index: number) {
         if (index < 0 || index >= this.projectiles.length) return;
-        const proj = this.projectiles[index];
-        if (proj.sprite && !proj.sprite.destroyed) {
-            this.app.stage.removeChild(proj.sprite);
-            proj.sprite.destroy();
-        }
-        if (proj.body) Matter.World.remove(this.engine.world, proj.body);
+        const p = this.projectiles[index];
+        if (p.sprite) { this.app.stage.removeChild(p.sprite); p.sprite.destroy(); }
+        Matter.World.remove(this.engine.world, p.body);
         this.projectiles.splice(index, 1);
     }
 
     public cleanup() {
-        for (let i = this.enemies.length - 1; i >= 0; i--) this.removeEnemy(i);
-        this.enemies = [];
-        for (let i = this.projectiles.length - 1; i >= 0; i--) this.removeProjectile(i);
-        this.projectiles = [];
+        while (this.enemies.length > 0) this.removeEnemy(0);
+        while (this.projectiles.length > 0) this.removeProjectile(0);
         this.enemiesDefeated = 0;
-
-        if (this.debugGraphics && !this.debugGraphics.destroyed) {
-            this.debugGraphics.clear();
-            this.app.stage.removeChild(this.debugGraphics);
-            this.debugGraphics.destroy();
-        }
-        // @ts-ignore
-        this.debugGraphics = null;
-
-        // ⚡ SPAWN DELAY RESET: 1s delay for next wave
-        this.spawnTimer = Math.max(0, GAME_CONFIG.enemySpawnInterval - 60);
+        if (this.debugGraphics) this.debugGraphics.clear();
     }
 }

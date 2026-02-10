@@ -101,13 +101,6 @@ export const useCollisionHandler = ({
                         gameState.current.score = newScore;
                         setScore(newScore);
 
-                        // --- ARENA LOGIC ---
-                        gameState.current.kluskiCollectedInCycle++;
-                        if (gameState.current.kluskiCollectedInCycle >= GAME_CONFIG.arenaInterval && !gameState.current.isArenaActive) {
-                            gameState.current.isArenaPending = true;
-                            if (GAME_CONFIG.debugMode) console.log("⚔️ ARENA PENDING! Kluski:", gameState.current.kluskiCollectedInCycle);
-                        }
-
 
                         if (newScore > 0 && newScore % 25 === 0) {
                             const quotes = GAME_CONFIG.SILESIAN_QUOTES;
@@ -118,19 +111,6 @@ export const useCollisionHandler = ({
                                 setActiveQuote(null);
                             }, GAME_CONFIG.quoteDuration);
                         }
-                    }
-                }
-
-                // Arena Ground Detection
-                const groundBody = bodyA.label === 'arena-ground' ? bodyA : (bodyB.label === 'arena-ground' ? bodyB : null);
-                const playerBody = bodyA.label === 'player' ? bodyA : (bodyB.label === 'player' ? bodyB : null);
-
-                if (groundBody && playerBody) {
-                    // Zamiast włączać arenę od razu, zapisujemy referencję do platformy
-                    // PlayerController włączy blokadę dopiero, gdy platforma wjedzie na środek.
-                    if (!gameState.current.arenaPlatformBody) {
-                        gameState.current.arenaPlatformBody = groundBody;
-                        if (GAME_CONFIG.debugMode) console.log("👀 Arena Platform Detected - Waiting for alignment...");
                     }
                 }
 

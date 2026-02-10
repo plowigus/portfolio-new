@@ -12,11 +12,7 @@ interface GameUIProps {
     onExit: () => void;
     activeQuote: string | null;
     assetManager: any;
-    // Arena Props
-    isArenaActive: boolean;
-    arenaWave: number;
-    currentKills: number;
-    requiredKills: number;
+    // Arena Props removed
 }
 
 export const GameUI: React.FC<GameUIProps> = ({
@@ -26,11 +22,7 @@ export const GameUI: React.FC<GameUIProps> = ({
     onRestart,
     onExit,
     activeQuote,
-    assetManager,
-    isArenaActive,
-    arenaWave,
-    currentKills,
-    requiredKills
+    assetManager
 }) => {
     const [selectedOption, setSelectedOption] = useState<'YES' | 'NO'>('YES');
     const [showHighScoreFlow, setShowHighScoreFlow] = useState(false);
@@ -139,21 +131,6 @@ export const GameUI: React.FC<GameUIProps> = ({
             <div className="absolute top-4 right-6 z-20 flex items-center gap-3">
                 <span className="text-xl font-bold text-yellow-500 drop-shadow-[2px_2px_0_#000]">HIGH SCORE: {highScore}</span>
             </div>
-
-            {/* --- ARENA HUD (HAJA) --- */}
-            {isArenaActive && !isGameOver && (
-                <div className="absolute top-20 left-0 right-0 flex flex-col items-center z-30 animate-in slide-in-from-top duration-500">
-                    <h2 className="text-6xl font-retro font-black text-red-600 drop-shadow-[4px_4px_0_#000] tracking-widest animate-pulse">
-                        HAJA!
-                    </h2>
-                    <div className="mt-2 text-2xl font-bold text-white drop-shadow-[2px_2px_0_#000] bg-black/50 px-4 py-1 rounded">
-                        FALA {arenaWave}
-                    </div>
-                    <div className="mt-1 text-xl text-yellow-400 drop-shadow-[1px_1px_0_#000]">
-                        WROGOWIE: {currentKills} / {requiredKills}
-                    </div>
-                </div>
-            )}
 
             {/* High Score Overlay */}
             {showHighScoreFlow && (

@@ -41,15 +41,9 @@ export const usePlayerController = ({
 
         if (!logicGameOver) {
             // ------------------------------------------------------------------
-            // 0. GROUND CHECK FIX (Arena & Animation)
+            // 0. GROUND CHECK
             // ------------------------------------------------------------------
-            // Fix 1: Uziemienie działa ZAWSZE, gdy jesteś na platformie areny.
-            // Nie czekamy na 'isArenaActive'. Dzięki temu animacja RUN działa od razu po wbiegnięciu.
-            const isArenaGrounded = state.arenaPlatformBody &&
-                Math.abs(playerBody.velocity.y) < 0.5 &&
-                playerBody.position.y > GAME_CONFIG.height - 200;
-
-            const isGrounded = physics.isTouchingGround || isArenaGrounded;
+            const isGrounded = physics.isTouchingGround;
 
             if (isGrounded) {
                 state.coyoteTimer = GAME_CONFIG.coyoteTime;
@@ -70,23 +64,8 @@ export const usePlayerController = ({
             }
 
             // ------------------------------------------------------------------
-            // 1. ARENA LOCK LOGIC (Precise Edge Detection)
+            // ATTACK INPUT
             // ------------------------------------------------------------------
-            if (state.arenaPlatformBody && !state.isArenaActive) {
-                // Obliczamy lewą krawędź platformy
-                // Body.position.x to środek obiektu w Matter.js
-                const halfWidth = GAME_CONFIG.arenaPlatformWidth / 2;
-                const arenaLeftEdge = state.arenaPlatformBody.position.x - halfWidth;
-
-                // LOCK następuje tylko wtedy, gdy LEWA krawędź platformy dotknie LEWEJ krawędzi ekranu (0).
-                // To gwarantuje, że platforma wypełnia cały ekran (bo ma 2500px szerokości).
-                if (arenaLeftEdge <= 0) {
-                    state.isArenaActive = true;
-                    if (GAME_CONFIG.debugMode) console.log("🔒 ARENA LOCKED! Full screen coverage confirmed.");
-                }
-            }
-
-            // Attack Input Handling
             const isKickPressed = keys.current["Backslash"];
             const isPunchPressed = keys.current["Quote"];
 
@@ -114,7 +93,7 @@ export const usePlayerController = ({
             }
 
             // ------------------------------------------------------------------
-            // MOVEMENT & CAMERA LOGIC
+            // MOVEMENT & CAMERA LOGIC (STRICT RUNNER)
             // ------------------------------------------------------------------
             let inputDir = 0;
             if (!state.isDying && !state.attackState.isPlaying) {
@@ -127,60 +106,40 @@ export const usePlayerController = ({
             const isSprinting = keys.current["Sprint"];
             const targetSpeed = isSprinting ? GAME_CONFIG.sprintSpeed : state.currentMoveSpeed;
 
-            if (state.isArenaActive) {
-                // --- ARENA MODE ---
+            if (inputDir === 0) {
+                // IDLE
+                state.vx = 0;
                 state.worldSpeed = 0;
-                if (inputDir !== 0) {
-                    state.vx = inputDir * targetSpeed;
-                    state.facing = inputDir === 1 ? 'right' : 'left';
+            } else if (inputDir === 1) {
+                // RIGHT
+                state.facing = 'right';
+
+                if (playerBody.position.x >= GAME_CONFIG.scrollThresholdX) {
+                    // Camera Lock - scroll world
+                    state.worldSpeed = targetSpeed;
+                    state.vx = 0;
+                    Matter.Body.setPosition(playerBody, {
+                        x: GAME_CONFIG.scrollThresholdX,
+                        y: playerBody.position.y
+                    });
                 } else {
-                    state.vx = 0;
-                }
-
-                // Arena Boundaries
-                const screenRightEdge = GAME_CONFIG.width - 40;
-                if (playerBody.position.x < GAME_CONFIG.leftBoundary) {
-                    Matter.Body.setPosition(playerBody, { x: GAME_CONFIG.leftBoundary, y: playerBody.position.y });
-                    state.vx = Math.max(0, state.vx);
-                }
-                if (playerBody.position.x > screenRightEdge) {
-                    Matter.Body.setPosition(playerBody, { x: screenRightEdge, y: playerBody.position.y });
-                    state.vx = Math.min(0, state.vx);
-                }
-
-            } else {
-                // --- RUNNER MODE ---
-                if (inputDir === 0) {
-                    state.vx = 0;
+                    // Move Player
                     state.worldSpeed = 0;
+                    state.vx = targetSpeed;
                 }
-                else if (inputDir === 1) {
-                    state.facing = 'right';
+            } else if (inputDir === -1) {
+                // LEFT
+                state.facing = 'left';
+                state.worldSpeed = 0;
 
-                    if (playerBody.position.x >= GAME_CONFIG.scrollThresholdX) {
-                        // SCROLL MODE: World moves, Player locked
-                        state.worldSpeed = targetSpeed;
-                        state.vx = 0;
-                        // Clamp position for stability
-                        Matter.Body.setPosition(playerBody, {
-                            x: GAME_CONFIG.scrollThresholdX,
-                            y: playerBody.position.y
-                        });
-                    } else {
-                        // APPROACH MODE: Player moves, World stops
-                        state.worldSpeed = 0;
-                        state.vx = targetSpeed;
-                    }
-                }
-                else if (inputDir === -1) {
-                    state.facing = 'left';
-                    state.worldSpeed = 0;
-                    if (playerBody.position.x <= GAME_CONFIG.leftBoundary) {
-                        state.vx = 0;
-                        Matter.Body.setPosition(playerBody, { x: GAME_CONFIG.leftBoundary, y: playerBody.position.y });
-                    } else {
-                        state.vx = -targetSpeed;
-                    }
+                if (playerBody.position.x <= GAME_CONFIG.leftBoundary) {
+                    state.vx = 0;
+                    Matter.Body.setPosition(playerBody, {
+                        x: GAME_CONFIG.leftBoundary,
+                        y: playerBody.position.y
+                    });
+                } else {
+                    state.vx = -targetSpeed;
                 }
             }
 
@@ -221,7 +180,9 @@ export const usePlayerController = ({
             }
         }
 
-        // Physics Handling
+        // ------------------------------------------------------------------
+        // PHYSICS HANDLING
+        // ------------------------------------------------------------------
         let currentVy = playerBody.velocity.y;
         currentVy += GAME_CONFIG.gravity * delta;
         if (currentVy > GAME_CONFIG.maxFallSpeed) currentVy = GAME_CONFIG.maxFallSpeed;
@@ -233,6 +194,7 @@ export const usePlayerController = ({
             state.vx *= GAME_CONFIG.friction;
             Matter.Body.setVelocity(playerBody, { x: state.vx, y: currentVy });
         } else if (state.attackState.isPlaying) {
+            // Stop horizontal movement during ground attack
             if (effectivelyGrounded) {
                 state.vx = 0;
                 Matter.Body.setVelocity(playerBody, { x: 0, y: currentVy });
