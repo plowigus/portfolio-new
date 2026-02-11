@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import Matter from 'matter-js';
-import { GAME_CONFIG } from '../config/gameConfig';
+import { GAME_CONFIG, COLLISION_CATEGORIES } from '../config/gameConfig';
 import { EnemyManager } from './EnemyManager';
 
 export interface GameObject {
@@ -10,8 +10,17 @@ export interface GameObject {
     type?: string;
 }
 
+
 export interface CoinObject extends GameObject {
     collected: boolean;
+}
+
+export interface MovingPlatform {
+    sprite: PIXI.Container;
+    body: Matter.Body;
+    initialY: number;
+    baseX: number; // We need to track X relative to the scrolling world
+    timeOffset: number;
 }
 
 export class SpawnerSystem {
@@ -22,6 +31,7 @@ export class SpawnerSystem {
 
     public obstacles: GameObject[] = [];
     public platforms: GameObject[] = [];
+    public movingPlatforms: MovingPlatform[] = [];
     public coins: CoinObject[] = [];
 
     public lastPlatformEndX: number = 0;
@@ -40,13 +50,98 @@ export class SpawnerSystem {
     }
 
     public initPlatforms() {
-        const startWidth = 1200;
+        const startWidth = 1000;
         this.createPlatform(0, startWidth, 'ground', true);
         this.lastPlatformEndX = startWidth;
     }
 
     private randomRange(min: number, max: number) {
         return Math.random() * (max - min) + min;
+    }
+
+    public spawnSzolaGap(startX: number): number {
+        const gapSize = GAME_CONFIG.szolaGapSize;
+        const midX = startX + (gapSize / 2);
+        const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
+
+        // Initial centered position
+        const initialY = groundY - 50;
+
+        // 1. Create Body (Floor only)
+        // Static body that we will move manually via setPosition
+        const bodyWidth = 100; // Hitbox width for floor
+        const bodyHeight = GAME_CONFIG.szolaFloorHeight;
+
+        const body = Matter.Bodies.rectangle(midX, initialY + GAME_CONFIG.szolaHitboxOffsetY, bodyWidth, bodyHeight, {
+            isStatic: true,        // DYNAMIC body (like Wózek)
+            isSensor: false,        // Solid
+            label: 'ground_moving', // Treat as ground
+            friction: 1.0,          // High friction for grip
+            frictionAir: 0,         // No air drag
+            density: 1000,          // Super heavy so player can't push it
+            inertia: Infinity,      // Prevent rotation
+            collisionFilter: {      // Ensure it collides like ground
+                category: COLLISION_CATEGORIES.GROUND,
+                mask: COLLISION_CATEGORIES.PLAYER | COLLISION_CATEGORIES.ENEMY | COLLISION_CATEGORIES.ENEMY_PROJECTILE
+            }
+        });
+        Matter.World.add(this.engine.world, body);
+
+        // 2. Create Sprite
+        let sprite: PIXI.Container;
+        if (this.textures.szola) {
+            const s = new PIXI.Sprite(this.textures.szola);
+            s.anchor.set(0.5, 0.5);
+            s.scale.set(GAME_CONFIG.szolaScale);
+            s.zIndex = 2; // Same as ground
+            sprite = s;
+        } else {
+            const g = new PIXI.Graphics();
+            g.rect(-50, -50, 100, 100).fill(0xFFFF00); // Yellow box fallback
+            sprite = g;
+        }
+        sprite.x = midX;
+        sprite.y = initialY;
+        this.app.stage.addChild(sprite);
+
+        this.movingPlatforms.push({
+            sprite,
+            body,
+            initialY,
+            baseX: midX,
+            timeOffset: Math.random() * 10000
+        });
+
+        // --- 3. COIN ARCS (The Reward) ---
+        const coinsPerSide = 7; // 6 + 6 = 12 coins
+        const jumpHeight = 90; // Max height of the coin arc relative to start
+
+        // Helper to spawn an arc
+        const spawnArc = (x1: number, x2: number, baseY: number) => {
+            for (let i = 1; i <= coinsPerSide; i++) {
+                // Normalized progress (0 to 1)
+                const t = i / (coinsPerSide + 1);
+
+                // Linear X interpolation
+                const cx = x1 + (x2 - x1) * t;
+
+                // Parabolic Y: 4 * h * t * (1-t) creates a nice hump
+                // We subtract because Y goes down in Pixi/Matter
+                const arcOffset = 4 * jumpHeight * t * (1 - t);
+                const cy = baseY - arcOffset;
+
+                this.createCollectible(cx, cy);
+            }
+        };
+
+        // Left Arc: Start Platform -> Elevator
+        spawnArc(startX, midX, initialY - 20); // slightly above floor
+
+        // Right Arc: Elevator -> Next Platform
+        // Note: gapSize is the full width, so next platform starts at startX + gapSize
+        spawnArc(midX, startX + gapSize, initialY - 20);
+
+        return startX + gapSize;
     }
 
     public createPlatform(x: number, width: number, label: string = 'ground', safe: boolean = false): number {
@@ -99,24 +194,38 @@ export class SpawnerSystem {
             const hasHigh = obstaclesOnThisPlatform.some(o => o.type === 'high');
             let groundEnemyX: number | null = null; // Śledzenie pozycji wroga naziemnego
 
-            // 1. Naziemni (BLUE lub RED)
-            if (obstaclesOnThisPlatform.length === 0 && Math.random() < 0.5) {
-                const midX = x + (width / 2);
-                const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
-                const cfg = GAME_CONFIG.ENEMY_CONFIG.BLUE as any;
-                let spawnY = groundY - (cfg.height / 2);
-                if (cfg.spawnHeightOffset) spawnY -= cfg.spawnHeightOffset;
-                this.enemyManager.spawnEnemyAt('BLUE', midX, spawnY);
-                groundEnemyX = midX;
-            }
-            else if (!hasHigh && Math.random() < 0.6) {
-                for (let k = 0; k < 3; k++) {
-                    const testX = this.randomRange(x + edgeBuffer, x + width - edgeBuffer);
-                    const isSafe = !obstaclesOnThisPlatform.some(o => Math.abs(o.x - testX) < GAME_CONFIG.enemySafeDistance);
-                    if (isSafe) {
-                        this.enemyManager.spawnEnemyAt('RED', testX, GAME_CONFIG.height - GAME_CONFIG.platformHeight - 25);
-                        groundEnemyX = testX;
-                        break;
+            // 1. Naziemni (BLUE lub RED) - SAFE START BUFFER CHECK
+            const safeStartBuffer = 500;
+            const safeRunX = x + safeStartBuffer;
+            const safeEndX = (x + width) - edgeBuffer; // Don't spawn too close to fall off
+
+            if (safeRunX < safeEndX) {
+                // Determine Midpoint of SAFE zone for Blue
+                const safeWidth = safeEndX - safeRunX;
+                const safeMidX = safeRunX + (safeWidth / 2);
+
+                if (obstaclesOnThisPlatform.length === 0 && Math.random() < 0.5) {
+                    const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
+                    const cfg = GAME_CONFIG.ENEMY_CONFIG.BLUE as any;
+                    let spawnY = groundY - (cfg.height / 2);
+                    if (cfg.spawnHeightOffset) spawnY -= cfg.spawnHeightOffset;
+                    this.enemyManager.spawnEnemyAt('BLUE', safeMidX, spawnY);
+                    groundEnemyX = safeMidX;
+                }
+                else if (!hasHigh && Math.random() < 0.6) {
+                    for (let k = 0; k < 3; k++) {
+                        // Spawn range: [safeRunX, safeEndX]
+                        const testX = this.randomRange(safeRunX, safeEndX);
+
+                        // INCREASED BUFFER: Ensure Red enemy is at least 450px away from obstacles
+                        const safeDistanceForRed = 550;
+                        const isSafe = !obstaclesOnThisPlatform.some(o => Math.abs(o.x - testX) < safeDistanceForRed);
+
+                        if (isSafe) {
+                            this.enemyManager.spawnEnemyAt('RED', testX, GAME_CONFIG.height - GAME_CONFIG.platformHeight - 25);
+                            groundEnemyX = testX;
+                            break;
+                        }
                     }
                 }
             }
@@ -150,10 +259,12 @@ export class SpawnerSystem {
 
     public update(delta: number, worldSpeed: number, enemyManager?: EnemyManager) {
         if (enemyManager && !this.enemyManager) this.enemyManager = enemyManager;
-        if (worldSpeed <= 0) return;
+        // REMOVED: if (worldSpeed <= 0) return; - Szola must animate even if stopped
 
+        // Platform logic
         for (let i = this.platforms.length - 1; i >= 0; i--) {
             const plat = this.platforms[i];
+            // Safe to translate by 0 if stopped
             Matter.Body.translate(plat.body, { x: -worldSpeed * delta, y: 0 });
             plat.sprite.x = plat.body.position.x - (plat.sprite.width / 2);
 
@@ -164,6 +275,39 @@ export class SpawnerSystem {
             }
         }
 
+        // --- NEW: Moving Platforms (Szola) Logic ---
+        const now = Date.now();
+        for (let i = this.movingPlatforms.length - 1; i >= 0; i--) {
+            const p = this.movingPlatforms[i];
+
+            // 1. Move X (Scrolling)
+            p.baseX -= worldSpeed * delta;
+
+            // 2. Move Y (Sine Wave)
+            // Offset ensures they don't all move identically if we had multiple on screen
+            const waveY = Math.sin((now + p.timeOffset) * GAME_CONFIG.szolaMoveSpeed) * GAME_CONFIG.szolaMoveRange;
+            const newY = p.initialY + waveY;
+
+            // 3. Update Physics Body
+            // We must explicitly set position because it's kinematic-like behavior for the Y axis
+            // but we need to account for X scrolling.
+            Matter.Body.setPosition(p.body, {
+                x: p.baseX,
+                y: newY + GAME_CONFIG.szolaHitboxOffsetY
+            });
+
+            // 4. Update Visuals
+            p.sprite.x = p.baseX + GAME_CONFIG.szolaVisualOffsetX;
+            p.sprite.y = newY + GAME_CONFIG.szolaVisualOffsetY;
+
+            // 5. Cleanup
+            if (p.sprite.x < -200) {
+                this.app.stage.removeChild(p.sprite);
+                Matter.World.remove(this.engine.world, p.body);
+                this.movingPlatforms.splice(i, 1);
+            }
+        }
+
         let rightmostX = -1000;
         this.platforms.forEach(p => {
             const rightEdge = p.body.position.x + (p.sprite.width / 2);
@@ -171,13 +315,21 @@ export class SpawnerSystem {
         });
 
         if (rightmostX === -1000) rightmostX = GAME_CONFIG.width;
-        this.lastPlatformEndX = rightmostX;
+        this.lastPlatformEndX = rightmostX; // Note: Szola gap doesn't count as "PlatformEndX" for spawning purposes until next ground starts
 
         if (this.lastPlatformEndX < GAME_CONFIG.width + 300) {
             const makeGap = Math.random() > 0.3;
             let gapSize = 0;
 
             if (makeGap) {
+                // 20% Chance for Szola Gap
+                if (Math.random() < 0.2) {
+                    const nextStart = this.spawnSzolaGap(this.lastPlatformEndX);
+                    const newWidth = this.randomRange(GAME_CONFIG.minPlatformWidth, GAME_CONFIG.maxPlatformWidth);
+                    this.createPlatform(nextStart, newWidth);
+                    return; // Skip standard gap/platform creation for this frame
+                }
+
                 gapSize = this.randomRange(GAME_CONFIG.minGap, GAME_CONFIG.maxGap);
                 const gapCenterX = this.lastPlatformEndX + (gapSize / 2);
                 const groundY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
@@ -419,7 +571,8 @@ export class SpawnerSystem {
     public cleanup() {
         this.obstacles.forEach(o => Matter.World.remove(this.engine.world, o.body));
         this.platforms.forEach(p => Matter.World.remove(this.engine.world, p.body));
+        this.movingPlatforms.forEach(p => Matter.World.remove(this.engine.world, p.body));
         this.coins.forEach(c => Matter.World.remove(this.engine.world, c.body));
-        this.obstacles = []; this.platforms = []; this.coins = [];
+        this.obstacles = []; this.platforms = []; this.coins = []; this.movingPlatforms = [];
     }
 }

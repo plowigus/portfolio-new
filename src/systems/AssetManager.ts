@@ -46,6 +46,7 @@ export class AssetManager {
             wheelTex,
             bumTex, // 🛋️ BUM
             kafelokTex, // 🧱 KAFELOK
+            szolaTex,   // 🏗️ SZOLA (Elevator)
 
             obiodSheet, obiodTex // 🛠️ Tutaj ładujemy roladę normalnie
         ] = await Promise.all([
@@ -86,6 +87,7 @@ export class AssetManager {
             loadSafe('/assets/items/wheel.png'),
             loadSafe('/assets/obstacles/bum.png'), // 🛋️ Bum
             loadSafe('/assets/obstacles/kaflok.png'), // 🧱 Kafelok (Note: kaflok.png)
+            loadSafe('/assets/items/szola.png'),       // 🏗️ Szola
             loadSafe('/assets/items/obiod.json'), // 🛠️ JSON
             loadSafe('/assets/items/obiod.png'),  // 🛠️ PNG
         ]);
@@ -111,6 +113,7 @@ export class AssetManager {
         setNearest(wheelTex);
         setNearest(bumTex);
         setNearest(kafelokTex);
+        setNearest(szolaTex);
         setNearest(obiodTex); // 🛠️ Pixel art dla rolady
 
         // 3. Krojenie twarzy (UI)
@@ -137,7 +140,8 @@ export class AssetManager {
             wozek: wozekTex,
             wheel: wheelTex,
             bum: bumTex,
-            kafelok: kafelokTex
+            kafelok: kafelokTex,
+            szola: szolaTex
         };
 
         // 5. Parsowanie animacji (wszystko tą samą metodą)

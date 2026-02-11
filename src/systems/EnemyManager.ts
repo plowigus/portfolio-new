@@ -436,35 +436,39 @@ export class EnemyManager {
             if (enemy.type === 'BLUE') {
                 // --- MANUAL GRAVITY & MOVEMENT ---
 
-                // KROK A: Obliczamy nową prędkość Y (Grawitacja)
-                // Nie używamy applyForce, żeby zachować spójność z fizyką gry (delta based),
-                // ale musimy uważać, by nie zablokować rotacji.
-                let newVy = enemy.body.velocity.y + (gravity * delta);
-                if (newVy > maxFallSpeed) newVy = maxFallSpeed;
+                // Activation Check
+                const activationDistance = GAME_CONFIG.width + 150;
+                const isActive = enemy.body.position.x < activationDistance;
 
-                // KROK B: Ustawiamy prędkość X (Ruch) OSOBNO od Y? 
-                // Matter.Body.setVelocity nadpisuje obie wartości.
-                // Aby wózek mógł się przechylać ("Ragdoll"), nie możemy wymuszać pozycji Y na sztywno,
-                // jeśli kolizja próbuje ją zmienić (np. tylne koło podbija wózek).
-                // Jednak przy wyłączonej grawitacji globalnej, musimy ciągnąć w dół.
+                if (!isActive) {
+                    // Idle state (waiting for player to approach)
+                    let newVy = enemy.body.velocity.y + (gravity * delta);
+                    if (newVy > maxFallSpeed) newVy = maxFallSpeed;
 
-                const targetVx = -cfg.baseSpeed;
+                    Matter.Body.setVelocity(enemy.body, { x: 0, y: newVy });
 
-                // Aplikujemy prędkość. 
-                // Dzięki usunięciu inertia: Infinity, siły kolizji (reakcja podłoża na tylne koło)
-                // wygenerują moment obrotowy (Torque), co obróci wózek.
-                Matter.Body.setVelocity(enemy.body, {
-                    x: targetVx,
-                    y: newVy
-                });
+                    enemy.isGrounded = Math.abs(enemy.body.velocity.y) < 0.5;
+                } else {
+                    // Active State
+                    let newVy = enemy.body.velocity.y + (gravity * delta);
+                    if (newVy > maxFallSpeed) newVy = maxFallSpeed;
 
-                // Rotacja kół (wizualna)
-                if (enemy.wheels) {
-                    const spin = (cfg.rotationSpeed || 0.15) * delta;
-                    enemy.wheels.forEach(wheel => { wheel.rotation -= spin; });
+                    const targetVx = -cfg.baseSpeed;
+
+                    Matter.Body.setVelocity(enemy.body, {
+                        x: targetVx,
+                        y: newVy
+                    });
+
+                    // Rotacja kół (wizualna)
+                    if (enemy.wheels) {
+                        const spin = (cfg.rotationSpeed || 0.15) * delta;
+                        enemy.wheels.forEach(wheel => { wheel.rotation -= spin; });
+                    }
+                    enemy.isGrounded = Math.abs(enemy.body.velocity.y) < 0.5;
                 }
 
-                enemy.isGrounded = Math.abs(enemy.body.velocity.y) < 0.5;
+
 
             } else if (enemy.type === 'RED') {
                 if (playerX < enemy.body.position.x && enemy.body.position.x < GAME_CONFIG.width) {

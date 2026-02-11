@@ -10,8 +10,8 @@ export const COLLISION_CATEGORIES = {
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: true,
-    COMMODORE_64_INTRO: false,
+    debugMode: false,
+    COMMODORE_64_INTRO: true,
 
     // Physics
     moveSpeed: 7,
@@ -256,6 +256,19 @@ export const GAME_CONFIG = {
     // VISUAL (Sprite) - Where the image is drawn
     klopsztangaVisualOffsetX: 0,   // Shift the image LEFT/RIGHT
     klopsztangaVisualOffsetY: 70,   // Shift the image UP/DOWN (e.g. to sink legs into ground)
+
+    // Szola (Elevator) Settings
+    szolaScale: 1.0,
+    szolaGapSize: 900,         // Width of the pit the player has to cross
+    szolaMoveRange: 40,       // Amplitude of movement (up/down pixels)
+    szolaMoveSpeed: 0.003,     // Speed of the sine wave
+
+    // Visual & Hitbox
+    szolaWidth: 120,           // Visual width (approx)
+    szolaFloorHeight: 20,      // The thickness of the floor hitbox (player stands on this)
+    szolaVisualOffsetX: 0,
+    szolaVisualOffsetY: -180,
+    szolaHitboxOffsetY: 90,  // Offset to place the hitbox at the BOTTOM of the cage image
 
     // Sprint & Trail Settings
     sprintSpeed: 11,

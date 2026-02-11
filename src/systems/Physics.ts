@@ -5,6 +5,8 @@ export class PhysicsSystem {
     public playerBody: Matter.Body | null = null;
     public isTouchingGround: boolean = false;
 
+    public isStandingOnSzola: boolean = false;
+
     // Zmienne do Fixed Timestep
     private accumulator: number = 0;
     private readonly fixedStep: number = 1000 / 60; // ~16.66ms (Sztywne 60 FPS dla fizyki)
@@ -63,9 +65,23 @@ export class PhysicsSystem {
     }
 
     private checkGroundCollision(bodyA: Matter.Body, bodyB: Matter.Body, isActive: boolean) {
-        if ((bodyA.label === 'player' && bodyB.label === 'ground') ||
-            (bodyB.label === 'player' && bodyA.label === 'ground')) {
-            this.isTouchingGround = isActive;
+        // Detect Player
+        let playerBody: Matter.Body | null = null;
+        let otherBody: Matter.Body | null = null;
+
+        if (bodyA.label === 'player') { playerBody = bodyA; otherBody = bodyB; }
+        else if (bodyB.label === 'player') { playerBody = bodyB; otherBody = bodyA; }
+
+        if (playerBody && otherBody) {
+            // Check for Standard Ground
+            if (otherBody.label === 'ground') {
+                this.isTouchingGround = isActive;
+            }
+            // Check for Moving Ground (Szola)
+            else if (otherBody.label === 'ground_moving') {
+                this.isTouchingGround = isActive;   // Treat as ground for jump/run mechanics
+                this.isStandingOnSzola = isActive;  // Set specific flag
+            }
         }
     }
 

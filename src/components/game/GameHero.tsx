@@ -15,7 +15,7 @@ interface GameHeroProps {
 
 export default function GameHero({ onGameReady }: GameHeroProps) {
     const canvasContainerRef = useRef<HTMLDivElement>(null);
-    const [gameState, setGameState] = useState<GameState>('PLAYING');
+    const [gameState, setGameState] = useState<GameState>('INTRO');
 
     // 🛑 Flaga sprawdzająca, czy to pierwsza gra w sesji
     const hasPlayedRef = useRef(false);
