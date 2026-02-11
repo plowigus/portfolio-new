@@ -9,7 +9,7 @@ export class AssetManager {
     public async loadAssets() {
 
         if (PIXI.Assets.cache.has('/assets/character/idle.json')) {
-
+            // Cache check
         }
 
         const loadSafe = async (path: string) => {
@@ -19,6 +19,7 @@ export class AssetManager {
             return PIXI.Assets.load(path);
         };
 
+        // 1. Ładujemy WSZYSTKO w jednym Promise.all (najszybsza metoda)
         const [
             idleSheet, idleTex,
             runSheet, runTex,
@@ -28,7 +29,16 @@ export class AssetManager {
             floorTex,
             bgTex,
             barrelSheet, barrelTex,
-            kluskiSheet, kluskiTex
+            kluskiSheet, kluskiTex,
+            kickTex,
+            punchTex,
+            faceTex,
+            // Nowe assety:
+            klopsztangaTex,
+            oponyTex,
+            wozekTex,
+            wheelTex,
+            obiodSheet, obiodTex // 🛠️ Tutaj ładujemy roladę normalnie
         ] = await Promise.all([
             loadSafe('/assets/character/idle.json'),
             loadSafe('/assets/character/idle.png'),
@@ -48,32 +58,32 @@ export class AssetManager {
             loadSafe('/assets/items/kluski.png'),
             loadSafe('/assets/character/kick.png'),
             loadSafe('/assets/character/punch.png'),
-            // faceTex loaded separately below
+            loadSafe('/assets/ui/face.png'),
+            // Obstacles & Items loaded in parallel:
+            loadSafe('/assets/obstacles/klopsztanga.png'),
+            loadSafe('/assets/obstacles/opony.png'),
+            loadSafe('/assets/items/wozek.png'),
+            loadSafe('/assets/items/wheel.png'),
+            loadSafe('/assets/items/obiod.json'), // 🛠️ JSON
+            loadSafe('/assets/items/obiod.png'),  // 🛠️ PNG
         ]);
 
-        // Ensure nearest neighbor scaling for pixel art look
-        floorTex.source.scaleMode = 'nearest';
-        barrelTex.source.scaleMode = 'nearest';
-        kluskiTex.source.scaleMode = 'nearest';
+        // 2. Ustawiamy Pixel Art Mode (Nearest Neighbor)
+        const setNearest = (tex: any) => { if (tex && tex.source) tex.source.scaleMode = 'nearest'; };
 
-        const klopsztangaTex = await loadSafe('/assets/obstacles/klopsztanga.png');
-        klopsztangaTex.source.scaleMode = 'nearest';
+        setNearest(floorTex);
+        setNearest(barrelTex);
+        setNearest(kluskiTex);
+        setNearest(klopsztangaTex);
+        setNearest(oponyTex);
+        setNearest(kickTex);
+        setNearest(punchTex);
+        setNearest(faceTex);
+        setNearest(wozekTex);
+        setNearest(wheelTex);
+        setNearest(obiodTex); // 🛠️ Pixel art dla rolady
 
-        const oponyTex = await loadSafe('/assets/obstacles/opony.png');
-        oponyTex.source.scaleMode = 'nearest';
-
-        // Kick and Punch textures
-        const kickTex = await loadSafe('/assets/character/kick.png');
-        kickTex.source.scaleMode = 'nearest';
-
-        const punchTex = await loadSafe('/assets/character/punch.png');
-        punchTex.source.scaleMode = 'nearest';
-
-        // Face slicing
-        const faceTex = await loadSafe('/assets/ui/face.png');
-        faceTex.source.scaleMode = 'nearest';
-
-        // Slice face (2 frames, horizontal)
+        // 3. Krojenie twarzy (UI)
         const faceW = faceTex.width / 2;
         const faceH = faceTex.height;
         const faceClosed = new PIXI.Texture({
@@ -85,15 +95,19 @@ export class AssetManager {
             frame: new PIXI.Rectangle(faceW, 0, faceW, faceH)
         });
 
+        // 4. Przypisanie tekstur statycznych
         this.textures = {
             floor: floorTex,
             background: bgTex,
             faceClosed,
             faceOpen,
             klopsztanga: klopsztangaTex,
-            opony: oponyTex
+            opony: oponyTex,
+            wozek: wozekTex,
+            wheel: wheelTex
         };
 
+        // 5. Parsowanie animacji (wszystko tą samą metodą)
         this.animations = {
             idle: this.parseFrames(idleSheet, idleTex),
             run: this.parseFrames(runSheet, runTex),
@@ -102,7 +116,11 @@ export class AssetManager {
             dead: this.parseFrames(deadSheet, deadTex),
             barrel: this.parseFrames(barrelSheet, barrelTex),
             kluska: this.parseFrames(kluskiSheet, kluskiTex),
-            face: [faceClosed, faceOpen], // For easier access if needed
+
+            // 🛠️ Rolada ładowana tak samo jak reszta:
+            obiod: this.parseFrames(obiodSheet, obiodTex),
+
+            face: [faceClosed, faceOpen],
 
             // Combo Animations
             kickFirst: this.parseFrames(getAnimationFrames('kick', 'kick-first'), kickTex),
@@ -115,18 +133,12 @@ export class AssetManager {
     }
 
     private parseFrames(jsonData: any, baseTexture: PIXI.TextureSource): PIXI.Texture[] {
-        // Assuming jsonData is an array of frames as per original code logic usually implies, 
-        // but PixiJS spritesheets usually come as object with frames.
-        // However, the original code treated jsonData as an array: `jsonData.map(frame => ...)`
-        // So I will stick to that interface.
         if (Array.isArray(jsonData)) {
             return jsonData.map((frame: any) => {
                 const region = new PIXI.Rectangle(frame.x, frame.y, frame.width, frame.height);
                 return new PIXI.Texture({ source: baseTexture, frame: region });
             });
         }
-        // Fallback if it's standard Pixi keys, but sticking to original logic
         return [];
     }
 }
-

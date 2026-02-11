@@ -32,15 +32,22 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
 
             renderer.app.stage.sortableChildren = true;
 
+            // 1. Tworzymy Spawner
             const spawner = new SpawnerSystem(
                 physics.engine,
                 renderer.app,
                 assetManager.textures,
                 assetManager.animations
             );
-            spawner.initPlatforms();
 
-            const enemyManager = new EnemyManager(physics.engine, renderer.app);
+            // 2. Tworzymy EnemyManager (TERAZ Z assetManager!)
+            const enemyManager = new EnemyManager(physics.engine, renderer.app, assetManager);
+
+            // 3. Łączymy systemy (Kluczowe dla spawnowania wrogów przez spawner)
+            spawner.setEnemyManager(enemyManager);
+
+            // 4. Dopiero teraz generujemy platformy (bo w środku jest spawn testowego wózka)
+            spawner.initPlatforms();
 
             physicsRef.current = physics;
             rendererRef.current = renderer;
@@ -77,15 +84,12 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
         };
 
         const cleanup = () => {
-            // 1. Najpierw czyścimy Managery (zależne od silnika)
             if (enemyManagerRef.current) enemyManagerRef.current.cleanup();
             if (spawnerRef.current) spawnerRef.current.cleanup();
 
-            // 2. Potem czyścimy systemy bazowe (Renderer niszczy Stage i Textury)
             if (rendererRef.current) rendererRef.current.cleanup();
             if (physicsRef.current) physicsRef.current.cleanup();
 
-            // 3. Zerujemy referencje
             physicsRef.current = null;
             rendererRef.current = null;
             spawnerRef.current = null;

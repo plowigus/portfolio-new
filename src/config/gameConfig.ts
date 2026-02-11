@@ -37,17 +37,43 @@ export const GAME_CONFIG = {
 
     ENEMY_CONFIG: {
         BLUE: {
-            color: 0x0000FF,
-            baseSpeed: 5,
-            width: 40, height: 50,
-            hp: 1,
-            maxCount: 2
+            type: 'MINE_CART',
+            baseSpeed: 1.5,
+            hp: 10,
+            maxCount: 2,
+
+            // Assets
+            bodyAsset: 'wozek',
+            wheelAsset: 'wheel',
+
+            // Physics Dimensions
+            width: 100,
+            height: 60,
+
+            // Visual Offsets & Scaling
+            hitboxOffsetX: 0,
+            hitboxOffsetY: 0,   // Adjust body sprite Y relative to physics center
+
+            wheelOffsetX: 25,   // Distance from center to wheel (Spread)
+            wheelOffsetY: 45,   // Distance from center down to wheel axle (Height)
+            wheelScale: 0.4,    // Scale of wheel sprite
+            spawnHeightOffset: -10,
+            rotationSpeed: 0.06, // Speed of wheel rotation
+            collisionOffsetTop: 0, // Tolerance for standing on top
+
+            // Dinner (Obiod) on cart
+            hasDinnerChance: 0.33,   // 1.0 = 100% for testing
+            dinnerOffsetX: 250,       // X offset from cart center
+            dinnerOffsetY: -230,    // Y offset (was dinnerOffset, renamed for clarity but keeping fallback)
+            dinnerSize: 40,         // Hitbox diameter
+            dinnerScale: 0.23,      // Visual scale
+            dinnerAnimSpeed: 0.15    // Animation speed
         },
         RED: {
             color: 0xFF0000,
             width: 50, height: 50,
             hp: 1,
-            attackCooldown: 120, // Strzał co 2 sekundy
+            attackCooldown: 180, // Strzał co 2 sekundy
             burstCount: 3,       // Czerwony strzela pojedynczo
             burstDelay: 50,
             safeEdgeBuffer: 150  // 🆕 Musi być min. 150px od krawędzi platformy

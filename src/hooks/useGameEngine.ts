@@ -36,6 +36,7 @@ export const useGameEngine = (
         facing: 'right' as 'left' | 'right',
         lives: GAME_CONFIG.maxLives as number,
         playerHitThisFrame: false,
+        playerHealedThisFrame: false,
         hurtCooldown: 0,
     });
 
@@ -72,6 +73,7 @@ export const useGameEngine = (
             facing: 'right' as 'left' | 'right',
             lives: GAME_CONFIG.maxLives as number,
             playerHitThisFrame: false,
+            playerHealedThisFrame: false,
             hurtCooldown: 0,
         };
         trailsRef.current = [];
@@ -153,6 +155,13 @@ export const useGameEngine = (
                 if (state.lives <= 0) {
                     triggerGameOver('low');
                 }
+            }
+
+            // Handle Healing (Dinner/Rolada)
+            if (state.playerHealedThisFrame) {
+                state.playerHealedThisFrame = false;
+                state.lives = GAME_CONFIG.maxLives;
+                setLives(state.lives);
             }
 
             if (!state.isGameOverLogic) {
