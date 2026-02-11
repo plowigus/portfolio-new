@@ -16,6 +16,8 @@ export interface Enemy {
     sprite: PIXI.Container | PIXI.Graphics;
     wheels?: PIXI.Sprite[];
     heldItem?: HeldItem;
+    fireSprite?: PIXI.AnimatedSprite;
+    fireTimer?: number;
     type: EnemyType;
     active: boolean;
     hp: number;
@@ -27,10 +29,11 @@ export interface Enemy {
 
 export interface Projectile {
     body: Matter.Body;
-    sprite: PIXI.Graphics;
+    sprite: PIXI.Container | PIXI.Sprite | PIXI.AnimatedSprite | PIXI.Graphics;
     type: 'BULLET' | 'BOMB';
     active: boolean;
     groundedTime: number;
+    isTumbling?: boolean;
 }
 
 export class EnemyManager {
@@ -93,12 +96,73 @@ export class EnemyManager {
             container.addChild(bodySprite);
 
             visual = container;
+        } else if (type === 'RED') {
+            const redCfg = GAME_CONFIG.ENEMY_CONFIG.RED as any;
+            if (this.assetManager.animations[redCfg.assetName || 'klasyk']) {
+                const anim = new PIXI.AnimatedSprite(this.assetManager.animations[redCfg.assetName || 'klasyk']);
+                anim.animationSpeed = redCfg.animationSpeed || 0.15;
+                anim.play();
+                anim.anchor.set(redCfg.anchorX || 0.5, redCfg.anchorY || 0.5);
+                anim.scale.set(redCfg.scale || 0.8);
+                // Adjust position
+                // Visual offsets based on config
+                // NOTE: anim.x/y set later, but we can wrap in container if needed. 
+                // Since we assume simple sprite sync, we'll just return the sprite.
+                visual = anim;
+
+                // --- Fire FX ---
+                if (redCfg.fireAssetName && this.assetManager.animations[redCfg.fireAssetName]) {
+                    const fireAnim = new PIXI.AnimatedSprite(this.assetManager.animations[redCfg.fireAssetName]);
+                    fireAnim.anchor.set(1, 0.5); // Grows left from gun
+                    fireAnim.scale.set(redCfg.fireScale || 1.0);
+                    fireAnim.x = (redCfg.fireOffsetX || -40);
+                    fireAnim.y = (redCfg.fireOffsetY || -15);
+                    fireAnim.animationSpeed = redCfg.fireAnimationSpeed || 0.3;
+                    fireAnim.visible = false;
+                    fireAnim.loop = true; // or false if oneshot, but we control visibility
+
+                    // We need a container to hold both body and fire if we want them to move together easily
+                    // But 'anim' is the visual. So we can add fire as child of anim?
+                    // AnimatedSprite extends Sprite extends Container. Yes.
+                    anim.addChild(fireAnim);
+
+                    // Store ref in enemy object later, but we need to extract it or pass it.
+                    // Actually, we can just attach it to the visual for now, but we need a reference in `this.enemies`.
+                    // We'll attach it temporarily to the visual object as a property if we can, or return it.
+                    // Better: `visual` is assigned to `enemy.sprite`. We can access children? 
+                    // Or we can assume enemy creation logic below needs modification to accept fireSprite.
+                    // Let's modify the `visual` creation to include it, and then extract it? 
+                    // No, `spawnEnemyAt` creates the `Enemy` object at the end. We can store it in a local var.
+                    (visual as any).fireSpriteRef = fireAnim;
+                }
+            } else {
+                const g = new PIXI.Graphics();
+                g.rect(0, 0, cfg.width, cfg.height);
+                g.fill(cfg.color);
+                g.pivot.set(cfg.width / 2, cfg.height / 2);
+                visual = g;
+            }
         } else {
-            const g = new PIXI.Graphics();
-            g.rect(0, 0, cfg.width, cfg.height);
-            g.fill(cfg.color);
-            g.pivot.set(cfg.width / 2, cfg.height / 2);
-            visual = g;
+            const yellowCfg = GAME_CONFIG.ENEMY_CONFIG.YELLOW as any;
+            if (this.assetManager.animations[yellowCfg.assetName || 'pigeon']) {
+                const anim = new PIXI.AnimatedSprite(this.assetManager.animations[yellowCfg.assetName || 'pigeon']);
+                anim.animationSpeed = yellowCfg.animationSpeed || 0.15;
+                anim.play();
+                anim.anchor.set(0.5); // Center anchor for rotation
+                anim.scale.set(yellowCfg.scale || 1);
+
+                // Visual Offsets
+                anim.x += (yellowCfg.visualOffsetX || 0);
+                anim.y += (yellowCfg.visualOffsetY || 0);
+
+                visual = anim;
+            } else {
+                const g = new PIXI.Graphics();
+                g.rect(0, 0, cfg.width, cfg.height);
+                g.fill(cfg.color);
+                g.pivot.set(cfg.width / 2, cfg.height / 2);
+                visual = g;
+            }
         }
 
         visual.x = x;
@@ -206,41 +270,119 @@ export class EnemyManager {
             attackTimer: type === 'RED' ? (cfg.attackCooldown || 0) : 0,
             burstShotsRemaining: 0,
             burstCooldown: 0,
+            fireSprite: (visual as any).fireSpriteRef,
+            fireTimer: 0
         });
     }
 
     private spawnBullet(x: number, y: number, targetX: number) {
         const pcfg = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE;
+        const redCfg = GAME_CONFIG.ENEMY_CONFIG.RED as any;
         const dir = targetX > x ? 1 : -1;
-        const graphics = new PIXI.Graphics();
-        graphics.circle(0, 0, pcfg.size);
-        graphics.fill(0xFF4444);
-        graphics.x = x; graphics.y = y; graphics.zIndex = 6;
-        this.app.stage.addChild(graphics);
-        const body = Matter.Bodies.circle(x, y, pcfg.size, {
+
+        // Trash Ball Logic
+        let sprite: PIXI.Container | PIXI.Sprite | PIXI.Graphics;
+        let isTumbling = false;
+
+        if (redCfg.projectileAsset && this.assetManager.animations[redCfg.projectileAsset]) {
+            // Container for Glow + Sprite
+            const container = new PIXI.Container();
+
+            // 1. Glow (Toxic Green)
+            const glow = new PIXI.Graphics();
+            const glowSize = (redCfg.projectileHitboxSize || 15) + (redCfg.projectileGlowSizeOffset || 5);
+            glow.circle(0, 0, glowSize);
+            glow.fill({
+                color: redCfg.projectileGlowColor || 0xAAFF00,
+                alpha: redCfg.projectileGlowAlpha ?? 0.6
+            });
+            glow.filters = [new PIXI.BlurFilter({
+                strength: redCfg.projectileGlowBlur || 10,
+                quality: 3
+            })];
+            container.addChild(glow);
+
+            // 2. Sprite
+            const anim = new PIXI.AnimatedSprite(this.assetManager.animations[redCfg.projectileAsset]);
+            anim.animationSpeed = redCfg.projectileAnimationSpeed || 0.15;
+            anim.play();
+            anim.anchor.set(0.5);
+            anim.scale.set(redCfg.projectileScale || 0.8);
+            container.addChild(anim);
+
+            sprite = container;
+            isTumbling = true;
+        } else {
+            const graphics = new PIXI.Graphics();
+            graphics.circle(0, 0, pcfg.size);
+            graphics.fill(0xFF4444);
+            sprite = graphics;
+        }
+
+        sprite.x = x;
+        sprite.y = y;
+        sprite.zIndex = 6;
+        this.app.stage.addChild(sprite);
+
+        const hitboxSize = redCfg.projectileHitboxSize || pcfg.size;
+
+        const body = Matter.Bodies.circle(x, y, hitboxSize, {
             label: 'bullet', isSensor: true, frictionAir: 0,
             collisionFilter: { category: COLLISION_CATEGORIES.ENEMY_PROJECTILE, mask: COLLISION_CATEGORIES.PLAYER | COLLISION_CATEGORIES.GROUND },
         });
-        Matter.Body.setVelocity(body, { x: dir * pcfg.bulletSpeed, y: 0 });
+
+        const speed = redCfg.projectileSpeed || pcfg.bulletSpeed;
+        Matter.Body.setVelocity(body, { x: dir * speed, y: 0 });
         Matter.World.add(this.engine.world, body);
-        this.projectiles.push({ body, sprite: graphics, type: 'BULLET', active: true, groundedTime: -1 });
+
+        this.projectiles.push({ body, sprite, type: 'BULLET', active: true, groundedTime: -1, isTumbling });
     }
 
     private spawnBomb(x: number, y: number) {
         const pcfg = GAME_CONFIG.ENEMY_CONFIG.PROJECTILE;
-        const graphics = new PIXI.Graphics();
-        graphics.rect(0, 0, pcfg.size * 2, pcfg.size * 2);
-        graphics.fill(0xFFFFFF);
-        graphics.pivot.set(pcfg.size, pcfg.size);
-        graphics.x = x; graphics.y = y; graphics.zIndex = 6;
-        this.app.stage.addChild(graphics);
-        const body = Matter.Bodies.rectangle(x, y, pcfg.size * 2, pcfg.size * 2, {
+        const yellowCfg = GAME_CONFIG.ENEMY_CONFIG.YELLOW as any;
+
+        let sprite: PIXI.Container | PIXI.Sprite | PIXI.Graphics | PIXI.AnimatedSprite;
+
+        if (yellowCfg.projectileAsset && this.assetManager.animations[yellowCfg.projectileAsset]) {
+            const anim = new PIXI.AnimatedSprite(this.assetManager.animations[yellowCfg.projectileAsset]);
+            anim.animationSpeed = yellowCfg.projectileAnimationSpeed || 0.1;
+            anim.play();
+            anim.anchor.set(0.5);
+            anim.scale.set(yellowCfg.projectileScale || 1);
+            sprite = anim;
+        } else {
+            const graphics = new PIXI.Graphics();
+            graphics.rect(0, 0, pcfg.size * 2, pcfg.size * 2);
+            graphics.fill(0xFFFFFF);
+            graphics.pivot.set(pcfg.size, pcfg.size);
+            sprite = graphics;
+        }
+
+        sprite.x = x; sprite.y = y;
+        // 💩 Poop behind ground (zIndex 2)
+        sprite.zIndex = (yellowCfg.projectileAsset === 'pigeon_poop') ? 1 : 6;
+        this.app.stage.addChild(sprite);
+
+        const hitboxSize = yellowCfg.projectileHitboxSize || pcfg.size;
+
+        // Note: For rectangle body, width/height is 2*size usually, but here we use hitboxSize maybe as radius or half-width?
+        // Original code: pcfg.size * 2.  hitboxSize is likely radius.
+        // Let's assume hitboxSize is RADIUS roughly, so width = hitboxSize * 2.
+        // But config says `projectileHitboxSize: 12`. 12*2 = 24.
+        // If we want a circle for the poop (it drops), maybe circle body is better?
+        // Original was rectangle. Let's stick to rectangle for now but sized correctly.
+        // If hitboxSize is 12, then box is 24x24.
+
+        const bodySize = hitboxSize * 2;
+
+        const body = Matter.Bodies.rectangle(x, y, bodySize, bodySize, {
             label: 'bomb', isStatic: false, isSensor: true, frictionAir: 0,
             collisionFilter: { category: COLLISION_CATEGORIES.ENEMY_PROJECTILE, mask: COLLISION_CATEGORIES.PLAYER | COLLISION_CATEGORIES.GROUND },
         });
         Matter.Body.setVelocity(body, { x: 0, y: (pcfg as any).bombSpeed || 10 });
         Matter.World.add(this.engine.world, body);
-        this.projectiles.push({ body, sprite: graphics, type: 'BOMB', active: true, groundedTime: -1 });
+        this.projectiles.push({ body, sprite, type: 'BOMB', active: true, groundedTime: -1 });
     }
 
     public update(delta: number, playerBody: Matter.Body, gameState: any, worldSpeed: number = 0) {
@@ -330,6 +472,28 @@ export class EnemyManager {
                     if (enemy.attackTimer >= cfg.attackCooldown) {
                         enemy.attackTimer = 0;
                         this.spawnBullet(enemy.body.position.x, enemy.body.position.y, playerX);
+
+                        // Show Fire
+                        if (enemy.fireSprite) {
+                            enemy.fireSprite.visible = true;
+                            enemy.fireSprite.gotoAndPlay(0);
+                            enemy.fireTimer = (cfg.fireDuration || 20);
+                        }
+                    }
+
+                    // Handle Fire Duration
+                    if (enemy.fireTimer && enemy.fireTimer > 0) {
+                        enemy.fireTimer -= 1; // using frames approach or delta? Config says frames.
+                        // But update uses delta (fractional). Let's assume delta ~ 1.0 for 60fps.
+                        // If delta is time-based, we might need to adjust. 
+                        // Let's stick to simple decrement for now or use delta if game is time-based.
+                        // The game seems to use delta. Let's start with decrementing by delta.
+                        // enemy.fireTimer -= delta; 
+
+                        if (enemy.fireTimer <= 0) {
+                            enemy.fireTimer = 0;
+                            if (enemy.fireSprite) enemy.fireSprite.visible = false;
+                        }
                     }
                 }
             } else if (enemy.type === 'YELLOW') {
@@ -448,6 +612,11 @@ export class EnemyManager {
             if (proj.body.position.y > GAME_CONFIG.height + 100 || proj.body.position.x < -100) { this.removeProjectile(i); continue; }
             if (Matter.Collision.collides(playerBody, proj.body)) { gameState.playerHitThisFrame = true; Matter.Body.setVelocity(playerBody, { x: -5, y: -5 }); this.removeProjectile(i); }
             if (proj.type === 'BOMB' && !proj.body.isStatic) { Matter.Body.applyForce(proj.body, proj.body.position, { x: 0, y: (GAME_CONFIG.ENEMY_CONFIG.PROJECTILE as any).bombGravity * 0.001 }); }
+
+            // Rotation for Trash Ball (Tumbling)
+            if (proj.isTumbling) {
+                proj.sprite.rotation -= 0.15 * delta;
+            }
         }
     }
 

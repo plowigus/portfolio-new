@@ -37,8 +37,16 @@ export class AssetManager {
             klopsztangaTex,
             oponyTex,
             metaTex,
+            klasykSheet, klasikTex,
+            fireSheet, fireTex,
+            trashballSheet, trashballTex,
+            pigeonSheet, pigeonTex, // 🐦 PIGEON
+            pigeonPoopSheet, pigeonPoopTex, // 💩 PIGEON POOP
             wozekTex,
             wheelTex,
+            bumTex, // 🛋️ BUM
+            kafelokTex, // 🧱 KAFELOK
+
             obiodSheet, obiodTex // 🛠️ Tutaj ładujemy roladę normalnie
         ] = await Promise.all([
             loadSafe('/assets/character/idle.json'),
@@ -64,8 +72,20 @@ export class AssetManager {
             loadSafe('/assets/obstacles/klopsztanga.png'),
             loadSafe('/assets/obstacles/opony.png'),
             loadSafe('/assets/obstacles/meta.png'),
+            loadSafe('/assets/obstacles/klasyk.json'),
+            loadSafe('/assets/obstacles/klasyk.png'),
+            loadSafe('/assets/items/fire.json'),
+            loadSafe('/assets/items/fire.png'),
+            loadSafe('/assets/items/trashball.json'),
+            loadSafe('/assets/items/trashball.png'),
+            loadSafe('/assets/items/piegeon.json'), // Note: piegeon filename
+            loadSafe('/assets/items/piegeon.png'),
+            loadSafe('/assets/items/pigeon_poop.json'),
+            loadSafe('/assets/items/pigeon_poop.png'),
             loadSafe('/assets/items/wozek.png'),
             loadSafe('/assets/items/wheel.png'),
+            loadSafe('/assets/obstacles/bum.png'), // 🛋️ Bum
+            loadSafe('/assets/obstacles/kaflok.png'), // 🧱 Kafelok (Note: kaflok.png)
             loadSafe('/assets/items/obiod.json'), // 🛠️ JSON
             loadSafe('/assets/items/obiod.png'),  // 🛠️ PNG
         ]);
@@ -79,11 +99,18 @@ export class AssetManager {
         setNearest(klopsztangaTex);
         setNearest(oponyTex);
         setNearest(metaTex);
+        setNearest(klasikTex);
+        setNearest(fireTex);
+        setNearest(trashballTex);
+        setNearest(pigeonTex);
+        setNearest(pigeonPoopTex);
         setNearest(kickTex);
         setNearest(punchTex);
         setNearest(faceTex);
         setNearest(wozekTex);
         setNearest(wheelTex);
+        setNearest(bumTex);
+        setNearest(kafelokTex);
         setNearest(obiodTex); // 🛠️ Pixel art dla rolady
 
         // 3. Krojenie twarzy (UI)
@@ -108,7 +135,9 @@ export class AssetManager {
             meta: metaTex,
             opony: oponyTex,
             wozek: wozekTex,
-            wheel: wheelTex
+            wheel: wheelTex,
+            bum: bumTex,
+            kafelok: kafelokTex
         };
 
         // 5. Parsowanie animacji (wszystko tą samą metodą)
@@ -120,6 +149,12 @@ export class AssetManager {
             dead: this.parseFrames(deadSheet, deadTex),
             barrel: this.parseFrames(barrelSheet, barrelTex),
             kluska: this.parseFrames(kluskiSheet, kluskiTex),
+            klasyk: this.parseFrames(klasykSheet, klasikTex),
+            fire: this.parseFrames(fireSheet, fireTex),
+            trashball: this.parseFrames(trashballSheet, trashballTex),
+            pigeon: this.parseFrames(pigeonSheet, pigeonTex), // 🐦 PIGEON
+            pigeon_poop: this.parseFrames(pigeonPoopSheet, pigeonPoopTex), // 💩 PIGEON POOP
+
 
             // 🛠️ Rolada ładowana tak samo jak reszta:
             obiod: this.parseFrames(obiodSheet, obiodTex),

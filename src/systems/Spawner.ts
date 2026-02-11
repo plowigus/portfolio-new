@@ -43,8 +43,6 @@ export class SpawnerSystem {
         const startWidth = 1200;
         this.createPlatform(0, startWidth, 'ground', true);
         this.lastPlatformEndX = startWidth;
-
-
     }
 
     private randomRange(min: number, max: number) {
@@ -226,8 +224,46 @@ export class SpawnerSystem {
         let bodyY = groundLevelY - bodyHeight;
 
         if (!isHigh) {
-            const spawnOpony = Math.random() > 0.5;
-            if (spawnOpony && this.textures.opony) {
+            const rand = Math.random();
+            // 30% Opony, 40% Barrel, 30% Bum (if available)
+            // Or simpler: Random choice
+
+            let spawnedType = 'barrel';
+
+            if (this.textures.kafelok && rand < 0.25) spawnedType = 'kafelok';
+            else if (this.textures.bum && rand < 0.5) spawnedType = 'bum';
+            else if (this.textures.opony && rand < 0.75) spawnedType = 'opony';
+            // else barrel
+
+            if (spawnedType === 'kafelok') {
+                // KAFELOK IMPLEMENTATION
+                const kafelok = new PIXI.Sprite(this.textures.kafelok);
+                kafelok.scale.set(GAME_CONFIG.kafelokScale);
+                kafelok.anchor.set(0.5, 1.0);
+                kafelok.x = x + GAME_CONFIG.kafelokVisualOffsetX;
+                kafelok.y = groundLevelY + GAME_CONFIG.kafelokVisualOffsetY;
+                kafelok.zIndex = 3;
+                sprite = kafelok;
+
+                bodyWidth = GAME_CONFIG.kafelokHitboxWidth;
+                bodyHeight = GAME_CONFIG.kafelokHitboxHeight;
+                bodyY = groundLevelY - (bodyHeight / 2) + GAME_CONFIG.kafelokHitboxOffsetY;
+
+            } else if (spawnedType === 'bum') {
+                // POTENTIAL BUM IMPLEMENTATION
+                const bum = new PIXI.Sprite(this.textures.bum);
+                bum.scale.set(GAME_CONFIG.bumScale);
+                bum.anchor.set(0.5, 1.0);
+                bum.x = x + GAME_CONFIG.bumVisualOffsetX;
+                bum.y = groundLevelY + GAME_CONFIG.bumVisualOffsetY;
+                bum.zIndex = 3;
+                sprite = bum;
+
+                bodyWidth = GAME_CONFIG.bumHitboxWidth;
+                bodyHeight = GAME_CONFIG.bumHitboxHeight;
+                bodyY = groundLevelY - (bodyHeight / 2) + GAME_CONFIG.bumHitboxOffsetY;
+
+            } else if (spawnedType === 'opony') {
                 const opony = new PIXI.Sprite(this.textures.opony);
                 opony.scale.set(GAME_CONFIG.oponyScale);
                 opony.anchor.set(0.5, 1.0);
@@ -240,18 +276,33 @@ export class SpawnerSystem {
                 bodyY = groundLevelY - (bodyHeight / 2) + GAME_CONFIG.oponyHitboxOffsetY;
             } else if (this.animations && this.animations.barrel) {
                 const barrel = new PIXI.AnimatedSprite(this.animations.barrel);
-                barrel.animationSpeed = 0.15; barrel.play();
-                barrel.scale.set(.68); barrel.anchor.set(0.4, 0.72);
-                barrel.x = x; barrel.y = groundLevelY;
-                barrel.zIndex = 3; sprite = barrel;
-                bodyWidth = 30; bodyHeight = 40;
-                bodyY = groundLevelY - (bodyHeight / 2);
+                barrel.animationSpeed = 0.15;
+                barrel.play();
+
+                barrel.scale.set(GAME_CONFIG.barrelScale);
+                barrel.anchor.set((GAME_CONFIG as any).barrelAnchorX || 0.4, (GAME_CONFIG as any).barrelAnchorY || 0.72);
+
+                barrel.x = x + GAME_CONFIG.barrelVisualOffsetX;
+                barrel.y = groundLevelY + GAME_CONFIG.barrelVisualOffsetY;
+
+                barrel.zIndex = 3;
+                sprite = barrel;
+
+                bodyWidth = GAME_CONFIG.barrelHitboxWidth;
+                bodyHeight = GAME_CONFIG.barrelHitboxHeight;
+                // Calculate bodyY relative to ground level, centering the hitbox height and applying offset
+                bodyY = groundLevelY - (GAME_CONFIG.barrelHitboxHeight / 2) + GAME_CONFIG.barrelHitboxOffsetY;
             } else {
                 const g = new PIXI.Graphics();
                 g.rect(0, 0, 40, 40).fill(0xff0000);
                 g.x = x; g.y = groundLevelY - 20; sprite = g;
             }
-            this.spawnCoinGroup(x, bodyY, GAME_CONFIG.coinLowObsHeight, 'jump');
+            let coinJumpHeight: number = GAME_CONFIG.coinLowObsHeight;
+            if (spawnedType === 'kafelok') {
+                coinJumpHeight = GAME_CONFIG.kafelokCoinJumpHeight;
+            }
+
+            this.spawnCoinGroup(x, bodyY, coinJumpHeight, 'jump');
         } else {
             // High Obstacle Logic (Klopsztanga or Meta)
             const useMeta = forceType === 'meta' || (!forceType && Math.random() > 0.5);
@@ -300,7 +351,10 @@ export class SpawnerSystem {
 
         if (isHigh && !isMeta) hitboxX += GAME_CONFIG.klopsztangaHitboxOffsetX;
         else if (isHigh && isMeta) hitboxX += GAME_CONFIG.metaHitboxOffsetX;
+        if (isHigh && !isMeta) hitboxX += GAME_CONFIG.klopsztangaHitboxOffsetX;
+        else if (isHigh && isMeta) hitboxX += GAME_CONFIG.metaHitboxOffsetX;
         else if (sprite instanceof PIXI.Sprite && sprite.texture === this.textures.opony) hitboxX += GAME_CONFIG.oponyHitboxOffsetX;
+        else if (sprite instanceof PIXI.Sprite && sprite.texture === this.textures.bum) hitboxX += GAME_CONFIG.bumHitboxOffsetX;
 
         const body = Matter.Bodies.rectangle(hitboxX, bodyY, bodyWidth, bodyHeight, { isSensor: true, label: type });
         Matter.World.add(this.engine.world, body);

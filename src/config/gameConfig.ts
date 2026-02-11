@@ -70,29 +70,77 @@ export const GAME_CONFIG = {
             dinnerAnimSpeed: 0.15    // Animation speed
         },
         RED: {
+            type: 'STATIONARY_SHOOTER',
             color: 0xFF0000,
             width: 50, height: 50,
             hp: 1,
             attackCooldown: 180, // Strzał co 2 sekundy
             burstCount: 3,       // Czerwony strzela pojedynczo
             burstDelay: 50,
-            safeEdgeBuffer: 150  // 🆕 Musi być min. 150px od krawędzi platformy
+            safeEdgeBuffer: 150,  // 🆕 Musi być min. 150px od krawędzi platformy
+
+            // Visuals (New)
+            assetName: 'klasyk',
+            scale: 0.34,           // Default scale, adjust if needed
+            anchorX: 0.45,
+            anchorY: 0.40,
+            visualOffsetX: 0,
+            visualOffsetY: 70,   // Adjust to align feet with ground
+            animationSpeed: 0.16,
+
+            // Hitbox Offsets (if needed relative to sprite)
+            hitboxOffsetX: 0,
+            hitboxOffsetY: 0,
+
+            // Muzzle Flash (Fire) Settings
+            fireAssetName: 'fire',
+            fireScale: 1.0,         // Adjust size
+            fireOffsetX: -40,       // Distance from center to the left (gun barrel)
+            fireOffsetY: -15,       // Height adjustment
+            fireAnimationSpeed: 0.3,
+            fireDuration: 20,       // How long (in frames/ticks) the fire is visible
+
+            // Projectile Settings (Trash Ball)
+            projectileAsset: 'trashball',
+            projectileSpeed: 5,
+            projectileScale: 0.9,
+            projectileHitboxSize: 15,
+            projectileAnimationSpeed: 0.15,
+
+            // Projectile Glow Settings
+            projectileGlowColor: 0x005300, // Toxic Green
+            projectileGlowAlpha: 1,
+            projectileGlowBlur: 10,
+            projectileGlowSizeOffset: 5,   // How much larger than hitbox
         },
         YELLOW: {
             color: 0xFFFF00,
             speed: 3,
             width: 60, height: 40,
-            hp: 1,
+            hp: 10,
             flyHeight: 280,      // Wysoko nad głową
             attackCooldown: 180, // Co 3 sekundy seria
             burstCount: 3,       // 🆕 SERIA 3 BOMBA
-            burstDelay: 15,      // 🆕 Szybkie odstępy (15 klatek = 0.25s)
-            maxCount: 2
+            burstDelay: 20,      // 🆕 Szybkie odstępy (15 klatek = 0.25s)
+            maxCount: 1,
+
+            // Visuals
+            assetName: 'pigeon',
+            scale: 0.6,           // Adjust size as needed
+            animationSpeed: 0.15,
+            visualOffsetX: 0,
+            visualOffsetY: 0,
+
+            // Projectile (Pigeon Poop)
+            projectileAsset: 'pigeon_poop',
+            projectileScale: 1.5,
+            projectileHitboxSize: 12, // Small hitbox for the dropping
+            projectileAnimationSpeed: 0.4,
         },
         PROJECTILE: {
             bulletSpeed: 4,
-            bombSpeed: 4,       // Bardzo szybki spad
-            bombGravity: 0.5,    // Ciężka bomba
+            bombSpeed: 6,       // Bardzo szybki spad
+            bombGravity: 0.7,    // Ciężka bomba
             fizzleTime: 100,     // Szybko znika po uderzeniu w ziemię
             size: 10
         }
@@ -141,9 +189,17 @@ export const GAME_CONFIG = {
     bgOffsetY: 0, // Adjust to lift background up/down
 
     // Obstacle Settings (Barrel)
-    barrelScale: 1,
-    barrelOffsetX: 0,
-    barrelOffsetY: -570,
+    barrelScale: 0.68,         // Zmienione z 1 na 0.68 (zgodnie z kodem Spawnera)
+    barrelVisualOffsetX: 0,    // (opcjonalne, jeśli chcesz przesuwać X)
+    barrelVisualOffsetY: -13,    // Beczka stała na groundLevelY, więc offset 0
+    barrelAnchorX: 0.4,
+    barrelAnchorY: 0.72,
+
+    // NEW: Barrel Hitbox Settings
+    barrelHitboxWidth: 40,
+    barrelHitboxHeight: 80,
+    barrelHitboxOffsetX: 0,
+    barrelHitboxOffsetY: 60,
 
     // Obstacle Settings (Neon META - High)
     metaScale: 0.65,
@@ -151,27 +207,50 @@ export const GAME_CONFIG = {
     metaVisualOffsetY: -160, // High up for sliding under
 
     // Hitbox
-    metaHitboxWidth: 60,
+    metaHitboxWidth: 300,
     metaHitboxHeight: 120,
-    metaHitboxOffsetX: -100,
+    metaHitboxOffsetX: 0,
     metaHitboxOffsetY: -80,
 
     // Obstacle Settings (Opony - Low)
     oponyScale: 0.45,
-    oponyHitboxWidth: 40,
-    oponyHitboxHeight: 40,
+    oponyHitboxWidth: 90,
+    oponyHitboxHeight: 100,
     oponyHitboxOffsetX: 0,
-    oponyHitboxOffsetY: 0, // 0 means exactly on ground level (if anchor is bottom)
+    oponyHitboxOffsetY: 50, // 0 means exactly on ground level (if anchor is bottom)
     oponyVisualOffsetX: 0,
     oponyVisualOffsetY: 61,
+
+    // Obstacle Settings (Bum/Bench - Low)
+    bumScale: .6,
+    bumVisualOffsetX: 0,
+    bumVisualOffsetY: 120, // Adjust to align bench legs with ground
+
+    // Hitbox (Physics)
+    bumHitboxWidth: 160,  // Wider than a barrel (it's a bench)
+    bumHitboxHeight: 40,  // Low enough to jump over
+    bumHitboxOffsetX: 0,
+    bumHitboxOffsetY: 0,  // 0 usually means sitting on the ground line
+
+    // Obstacle Settings (Kafelok - Low)
+    kafelokScale: .5,
+    kafelokVisualOffsetX: 0,
+    kafelokVisualOffsetY: 65,
+
+    // Hitbox (Physics)
+    kafelokHitboxWidth: 140,   // Irregular pile, slightly wider
+    kafelokHitboxHeight: 60,  // Low enough to jump over
+    kafelokHitboxOffsetX: 0,
+    kafelokHitboxOffsetY: 45,
+    kafelokCoinJumpHeight: 120, // Lower than default (150) because obstacle is higher
 
     // Obstacle Settings (Klopsztanga - High)
     klopsztangaScale: 0.7,
 
     // HITBOX (Physics) - Where the player dies
-    klopsztangaHitboxWidth: 40,
+    klopsztangaHitboxWidth: 140,
     klopsztangaHitboxHeight: 120,
-    klopsztangaHitboxOffsetX: -30,
+    klopsztangaHitboxOffsetX: 0,
     klopsztangaHitboxOffsetY: -80, // Higher negative value = higher hitbox (gap at bottom)
 
     // VISUAL (Sprite) - Where the image is drawn
