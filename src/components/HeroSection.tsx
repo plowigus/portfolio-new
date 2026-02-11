@@ -17,9 +17,10 @@ import { GAME_CONFIG } from "@/config/gameConfig";
 
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
-  const [shouldLoadGame, setShouldLoadGame] = useState(!GAME_CONFIG.COMMODORE_64_INTRO);
+  // Explicitly type as <boolean> to prevent TypeScript from narrowing to literal true/false
+  const [shouldLoadGame, setShouldLoadGame] = useState<boolean>(!GAME_CONFIG.COMMODORE_64_INTRO);
   const [isGameReady, setIsGameReady] = useState(false);
-  const [showLoader, setShowLoader] = useState(GAME_CONFIG.COMMODORE_64_INTRO);
+  const [showLoader, setShowLoader] = useState<boolean>(GAME_CONFIG.COMMODORE_64_INTRO);
 
 
   useEffect(() => {

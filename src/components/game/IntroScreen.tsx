@@ -60,7 +60,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
                 {/* Main Title */}
                 <div className="flex flex-col items-end mb-12">
                     <h1 className="font-thuast text-8xl md:text-7xl text-red-700 drop-shadow-[5px_5px_0_rgba(0,0,0,0.8)] leading-none text-right">
-                        BYTOM
+                        SILESIA
                     </h1>
                     <h1 className="font-thuast text-8xl md:text-7xl text-white drop-shadow-[5px_5px_0_rgba(0,0,0,0.8)] leading-none text-right -mt-4">
                         RUNNER
@@ -94,8 +94,8 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
                 </div>
 
                 {/* Version / Info Footer */}
-                <div className="absolute bottom-4 right-4 text-white/30 font-mono text-xs text-right">
-                    v1.0.0 • PRESS ENTER TO SELECT
+                <div className="absolute bottom-4 right-5 text-white/30 font-mono text-xs text-right">
+                    v1.1 • PRESS ENTER TO SELECT
                 </div>
             </div>
         </div>
