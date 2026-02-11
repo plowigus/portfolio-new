@@ -121,14 +121,13 @@ export class EnemyManager {
             const w1 = Matter.Bodies.circle(x - cfg.wheelOffsetX, y + cfg.wheelOffsetY - 10, wheelRadius, commonProps);
             const w2 = Matter.Bodies.circle(x + cfg.wheelOffsetX, y + cfg.wheelOffsetY - 10, wheelRadius, commonProps);
 
-            // 🛠️ CRITICAL FIX: USUNIĘTO inertia: Infinity
-            // Teraz wózek może się obracać (przechylać), gdy jedno koło straci grunt.
+
             body = Matter.Body.create({
                 parts: [chassis, w1, w2],
-                friction: 0.8,      // 🛠️ Duże tarcie, żeby "chwycił" krawędź i się obrócił
-                frictionAir: 0.001, // Mały opór powietrza dla płynniejszego lotu
-                density: 0.05,      // Ciężki obiekt
-                restitution: 0,     // Nie odbija się jak piłka
+                friction: 0.8,
+                frictionAir: 0.001,
+                density: 0.05,
+                restitution: 0,
                 inertia: Infinity,
                 label: `enemy_${type}`
             });

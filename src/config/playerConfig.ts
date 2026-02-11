@@ -20,7 +20,7 @@ export const PLAYER_CONFIG: Record<string, PlayerAnimationConfig> = {
         offset: { x: 0, y: 0 }
     },
     RUN: {
-        animationSpeed: 0.30, // Will be modulated by move speed in logic
+        animationSpeed: 0.25, // Will be modulated by move speed in logic
         scale: { x: 1, y: 1 },
         anchor: { x: 0.5, y: 0.5 },
         offset: { x: 0, y: 0 }

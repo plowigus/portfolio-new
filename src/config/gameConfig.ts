@@ -15,17 +15,17 @@ export const GAME_CONFIG = {
 
     // Physics
     moveSpeed: 7,
-    maxMoveSpeed: 12,
+    maxMoveSpeed: 10,
     characterScale: 0.3,
     animationSpeed: 0.25,
     gravity: 0.52,
     jumpPower: -12,
 
     // Camera
-    scrollThresholdX: 200,
+    scrollThresholdX: 300,
     leftBoundary: 40,
     maxFallSpeed: 20,
-    friction: 0.9,
+    friction: 0.95,
     deathFallThreshold: 200,
 
     // Player Health
@@ -62,11 +62,11 @@ export const GAME_CONFIG = {
             collisionOffsetTop: 0, // Tolerance for standing on top
 
             // Dinner (Obiod) on cart
-            hasDinnerChance: 0.33,   // 1.0 = 100% for testing
-            dinnerOffsetX: 250,       // X offset from cart center
+            hasDinnerChance: 0.4,   // 1.0 = 100% for testing
+            dinnerOffsetX: 400,       // X offset from cart center
             dinnerOffsetY: -230,    // Y offset (was dinnerOffset, renamed for clarity but keeping fallback)
             dinnerSize: 40,         // Hitbox diameter
-            dinnerScale: 0.23,      // Visual scale
+            dinnerScale: 0.20,      // Visual scale
             dinnerAnimSpeed: 0.15    // Animation speed
         },
         RED: {
@@ -98,8 +98,6 @@ export const GAME_CONFIG = {
         }
     },
 
-    // Spawner Settings (Bez Areny)
-    // Spawner Settings (Bez Areny)
     spawnMinTime: 90,
     spawnMaxTime: 150,
     platformHeight: 100,
@@ -112,7 +110,7 @@ export const GAME_CONFIG = {
     safeEdgeBuffer: 450,   // Margines od krawędzi (było 300 w 'safeEdgeBuffer', ale to dla generowania platform, dodajmy specificzne dla przeszkód)
     platformEdgeBuffer: 350, // Przeszkoda min. 150px od początku/końca
     obstacleMinGap: 450,     // Przeszkoda min. 350px od innej przeszkody
-    enemySafeDistance: 400,  // Min distance between enemy and obstacle
+    enemySafeDistance: 300,  // Min distance between enemy and obstacle
 
     // Visuals & Offsets
     characterVisualOffset: -15,
@@ -170,16 +168,16 @@ export const GAME_CONFIG = {
     klopsztangaVisualOffsetY: 70,   // Shift the image UP/DOWN (e.g. to sink legs into ground)
 
     // Sprint & Trail Settings
-    sprintSpeed: 12,
+    sprintSpeed: 11,
     trailInterval: 4,
     trailFadeSpeed: 0.05,
-    trailStartAlpha: 0.5,
+    trailStartAlpha: 0.3,
     trailTint: 0xffffff,
 
     // Death Sequence Settings
     deathSlowMotionScale: 0.2, // 20% speed
-    deathDuration: 180, // Duration units (logic frames)
-    deathGhostAlpha: 0.6, // Visual transparency
+    deathDuration: 360, // Duration units (logic frames)
+    deathGhostAlpha: 0.2, // Visual transparency
     deathGhostTint: 0xffffff, // Red
     deathTrailIntervalMultiplier: 10, // Spawns trails less frequently than sprint
 
