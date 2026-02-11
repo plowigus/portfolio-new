@@ -120,11 +120,20 @@ export const GameUI: React.FC<GameUIProps> = ({
 
                 <div className="flex gap-1 ml-1">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <span key={i} className="text-xl drop-shadow-[2px_2px_0_#000]" style={{ opacity: i < lives ? 1 : 0.25 }}>
-                            {i < lives ? '❤️' : '🖤'}
-                        </span>
+                        <img
+                            key={i}
+                            src="/assets/ui/heart.png"
+                            alt={i < lives ? "Active Life" : "Lost Life"}
+                            className={`w-8 h-8 drop-shadow-[2px_2px_0_#000] object-contain transition-all duration-300 ${i >= lives ? 'grayscale' : ''}`}
+                            style={{
+                                imageRendering: "pixelated",
+                                opacity: i < lives ? 1 : 0.25
+                            }}
+                        />
                     ))}
                 </div>
+
+
             </div>
 
             {/* High Score */}

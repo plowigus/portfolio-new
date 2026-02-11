@@ -36,6 +36,7 @@ export class AssetManager {
             // Nowe assety:
             klopsztangaTex,
             oponyTex,
+            metaTex,
             wozekTex,
             wheelTex,
             obiodSheet, obiodTex // 🛠️ Tutaj ładujemy roladę normalnie
@@ -62,6 +63,7 @@ export class AssetManager {
             // Obstacles & Items loaded in parallel:
             loadSafe('/assets/obstacles/klopsztanga.png'),
             loadSafe('/assets/obstacles/opony.png'),
+            loadSafe('/assets/obstacles/meta.png'),
             loadSafe('/assets/items/wozek.png'),
             loadSafe('/assets/items/wheel.png'),
             loadSafe('/assets/items/obiod.json'), // 🛠️ JSON
@@ -76,6 +78,7 @@ export class AssetManager {
         setNearest(kluskiTex);
         setNearest(klopsztangaTex);
         setNearest(oponyTex);
+        setNearest(metaTex);
         setNearest(kickTex);
         setNearest(punchTex);
         setNearest(faceTex);
@@ -102,6 +105,7 @@ export class AssetManager {
             faceClosed,
             faceOpen,
             klopsztanga: klopsztangaTex,
+            meta: metaTex,
             opony: oponyTex,
             wozek: wozekTex,
             wheel: wheelTex

@@ -43,6 +43,8 @@ export class SpawnerSystem {
         const startWidth = 1200;
         this.createPlatform(0, startWidth, 'ground', true);
         this.lastPlatformEndX = startWidth;
+
+
     }
 
     private randomRange(min: number, max: number) {
@@ -215,7 +217,7 @@ export class SpawnerSystem {
         }
     }
 
-    public spawnObstacleAt(x: number, isHigh: boolean) {
+    public spawnObstacleAt(x: number, isHigh: boolean, forceType: 'meta' | null = null) {
         const type = isHigh ? 'obstacle_high' : 'obstacle_low';
         const groundLevelY = GAME_CONFIG.height - GAME_CONFIG.platformHeight;
         let sprite: PIXI.Container;
@@ -251,34 +253,63 @@ export class SpawnerSystem {
             }
             this.spawnCoinGroup(x, bodyY, GAME_CONFIG.coinLowObsHeight, 'jump');
         } else {
-            if (this.textures.klopsztanga) {
+            // High Obstacle Logic (Klopsztanga or Meta)
+            const useMeta = forceType === 'meta' || (!forceType && Math.random() > 0.5);
+
+            if (useMeta && this.textures.meta) {
+                // META (Neon Sign)
+                const meta = new PIXI.Sprite(this.textures.meta);
+                meta.anchor.set(0.5, 0.5);
+                meta.scale.set(GAME_CONFIG.metaScale);
+                meta.x = x + GAME_CONFIG.metaVisualOffsetX;
+                meta.y = groundLevelY + GAME_CONFIG.metaVisualOffsetY;
+                meta.zIndex = 3; // In front of player
+                sprite = meta;
+
+                bodyWidth = GAME_CONFIG.metaHitboxWidth;
+                bodyHeight = GAME_CONFIG.metaHitboxHeight;
+                bodyY = groundLevelY + GAME_CONFIG.metaHitboxOffsetY;
+
+            } else if (!useMeta && this.textures.klopsztanga) {
+                // KLOPSZTANGA
                 const cb = new PIXI.Sprite(this.textures.klopsztanga);
                 cb.anchor.set(0.5, 1.0); cb.scale.set(GAME_CONFIG.klopsztangaScale);
                 cb.x = x + GAME_CONFIG.klopsztangaVisualOffsetX;
                 cb.y = groundLevelY + GAME_CONFIG.klopsztangaVisualOffsetY;
                 cb.zIndex = 1.5; sprite = cb;
+
+                bodyWidth = GAME_CONFIG.klopsztangaHitboxWidth;
+                bodyHeight = GAME_CONFIG.klopsztangaHitboxHeight;
+                bodyY = groundLevelY + GAME_CONFIG.klopsztangaHitboxOffsetY;
             } else {
                 const g = new PIXI.Graphics();
                 g.rect(0, 0, 50, 120).fill(0x0000ff);
                 g.x = x; g.y = groundLevelY; sprite = g;
+
+                bodyWidth = GAME_CONFIG.klopsztangaHitboxWidth;
+                bodyHeight = GAME_CONFIG.klopsztangaHitboxHeight;
+                bodyY = groundLevelY + GAME_CONFIG.klopsztangaHitboxOffsetY;
             }
-            bodyWidth = GAME_CONFIG.klopsztangaHitboxWidth;
-            bodyHeight = GAME_CONFIG.klopsztangaHitboxHeight;
-            bodyY = groundLevelY + GAME_CONFIG.klopsztangaHitboxOffsetY;
+
             this.spawnCoinGroup(x, groundLevelY, GAME_CONFIG.coinSlideHeight, 'slide');
         }
 
         this.app.stage.addChild(sprite);
         let hitboxX = x;
-        if (isHigh) hitboxX += GAME_CONFIG.klopsztangaHitboxOffsetX;
+        const isMeta = sprite instanceof PIXI.Sprite && sprite.texture === this.textures.meta;
+
+        if (isHigh && !isMeta) hitboxX += GAME_CONFIG.klopsztangaHitboxOffsetX;
+        else if (isHigh && isMeta) hitboxX += GAME_CONFIG.metaHitboxOffsetX;
         else if (sprite instanceof PIXI.Sprite && sprite.texture === this.textures.opony) hitboxX += GAME_CONFIG.oponyHitboxOffsetX;
 
         const body = Matter.Bodies.rectangle(hitboxX, bodyY, bodyWidth, bodyHeight, { isSensor: true, label: type });
         Matter.World.add(this.engine.world, body);
 
         let offset = { x: 0, y: 0 };
-        if (isHigh && this.textures.klopsztanga) offset = { x: sprite.x - body.position.x, y: sprite.y - body.position.y };
-        else if (!isHigh && sprite instanceof PIXI.Sprite && sprite.texture === this.textures.opony) offset = { x: sprite.x - body.position.x, y: sprite.y - body.position.y };
+        // Calculate offset based on visual vs body position
+        if (sprite && body) {
+            offset = { x: sprite.x - body.position.x, y: sprite.y - body.position.y };
+        }
 
         this.obstacles.push({ sprite, body, offset, type: isHigh ? 'high' : 'low' });
     }

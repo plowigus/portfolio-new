@@ -10,7 +10,7 @@ export const COLLISION_CATEGORIES = {
 export const GAME_CONFIG = {
     width: 1080,
     height: 450,
-    debugMode: false,
+    debugMode: true,
     COMMODORE_64_INTRO: false,
 
     // Physics
@@ -143,7 +143,18 @@ export const GAME_CONFIG = {
     // Obstacle Settings (Barrel)
     barrelScale: 1,
     barrelOffsetX: 0,
-    barrelOffsetY: -500,
+    barrelOffsetY: -570,
+
+    // Obstacle Settings (Neon META - High)
+    metaScale: 0.65,
+    metaVisualOffsetX: 0,
+    metaVisualOffsetY: -160, // High up for sliding under
+
+    // Hitbox
+    metaHitboxWidth: 60,
+    metaHitboxHeight: 120,
+    metaHitboxOffsetX: -100,
+    metaHitboxOffsetY: -80,
 
     // Obstacle Settings (Opony - Low)
     oponyScale: 0.45,
