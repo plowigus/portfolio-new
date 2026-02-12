@@ -102,7 +102,7 @@ export const useCollisionHandler = ({
                         setScore(newScore);
 
 
-                        if (newScore > 0 && newScore % 25 === 0) {
+                        if (newScore > 0 && newScore % 2000 === 0) {
                             const quotes = GAME_CONFIG.SILESIAN_QUOTES;
                             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
                             setActiveQuote(randomQuote);
