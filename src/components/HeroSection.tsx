@@ -10,6 +10,7 @@ import C64OS from "./os/C64OS";
 export function HeroSection() {
   const [currentTime, setCurrentTime] = useState("");
   const [scale, setScale] = useState(1);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   // Time update
   useEffect(() => {
@@ -29,29 +30,27 @@ export function HeroSection() {
     return () => clearInterval(interval);
   }, []);
 
-  // Responsive scale — fits 1080x450 into available space (width AND height)
+  // Desktop detection + responsive scale
   useEffect(() => {
-    const calculateScale = () => {
-      const GAME_WIDTH = 1080;
-      const GAME_HEIGHT = 450;
+    const update = () => {
+      const desktop = window.innerWidth >= 1024; // lg breakpoint
+      setIsDesktop(desktop);
 
-      // Available width: viewport minus horizontal padding (24px each side mobile, 48px md+)
-      const horizontalPadding = window.innerWidth >= 768 ? 96 : 48;
-      const availableWidth = window.innerWidth - horizontalPadding;
-
-      // Available height: viewport minus nav (~80px) and footer area (~80px)
-      const availableHeight = window.innerHeight - 160;
-
-      const scaleX = availableWidth / GAME_WIDTH;
-      const scaleY = availableHeight / GAME_HEIGHT;
-
-      // Use the smaller scale so it always fits, capped at 1 (never upscale)
-      setScale(Math.min(scaleX, scaleY, 1));
+      if (desktop) {
+        const GAME_WIDTH = 1080;
+        const GAME_HEIGHT = 450;
+        const horizontalPadding = 96;
+        const availableWidth = window.innerWidth - horizontalPadding;
+        const availableHeight = window.innerHeight - 160;
+        const scaleX = availableWidth / GAME_WIDTH;
+        const scaleY = availableHeight / GAME_HEIGHT;
+        setScale(Math.min(scaleX, scaleY, 1));
+      }
     };
 
-    calculateScale();
-    window.addEventListener("resize", calculateScale);
-    return () => window.removeEventListener("resize", calculateScale);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
   return (
@@ -63,35 +62,39 @@ export function HeroSection() {
         Łowigus
       </h1>
 
-      {/* C64 OS — Desktop only (lg+) */}
-      <div
-        className="relative z-20 hidden lg:block"
-        style={{
-          width: 1080 * scale,
-          height: 450 * scale,
-        }}
-      >
+      {/* C64 OS — Desktop only (lg+), NOT mounted on mobile at all */}
+      {isDesktop && (
         <div
-          className="origin-top-left"
+          className="relative z-20"
           style={{
-            width: 1080,
-            height: 450,
-            transform: `scale(${scale})`,
+            width: 1080 * scale,
+            height: 450 * scale,
           }}
         >
-          <C64OS />
+          <div
+            className="origin-top-left"
+            style={{
+              width: 1080,
+              height: 450,
+              transform: `scale(${scale})`,
+            }}
+          >
+            <C64OS />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Mobile Hero — placeholder for future reactbits content */}
-      <div className="flex lg:hidden flex-col items-center justify-center text-center gap-6 px-4">
-        <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 tracking-tight leading-tight">
-          Patryk Łowigus
-        </h2>
-        <p className="text-lg md:text-xl text-neutral-500 max-w-md">
-          Frontend Developer building modern web experiences.
-        </p>
-      </div>
+      {!isDesktop && (
+        <div className="flex flex-col items-center justify-center text-center gap-6 px-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 tracking-tight leading-tight">
+            Patryk Łowigus
+          </h2>
+          <p className="text-lg md:text-xl text-neutral-500 max-w-md">
+            Frontend Developer building modern web experiences.
+          </p>
+        </div>
+      )}
 
       <VerticalChangingText />
       <RightDecorativeLine />
