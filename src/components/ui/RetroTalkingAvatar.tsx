@@ -22,6 +22,19 @@ export function RetroTalkingAvatar({
     const [mouthState, setMouthState] = useState<"idle" | "talk">("idle");
     const [hoverCount, setHoverCount] = useState(0);
 
+    // Auto-trigger for mobile devices on initial load
+    useEffect(() => {
+        // Simple check if we are on a mobile-sized screen
+        if (typeof window !== "undefined" && window.innerWidth < 1024) {
+            const showTimer = setTimeout(() => {
+                setIsHovered(true);
+                setHoverCount(prev => prev + 1);
+            }, 1000); // 1 second delay after mount
+
+            return () => clearTimeout(showTimer);
+        }
+    }, []);
+
     // Refs for intervals/timers to clear them properly
     const typewriterRef = useRef<NodeJS.Timeout | null>(null);
     const talkingRef = useRef<NodeJS.Timeout | null>(null);
@@ -46,6 +59,7 @@ export function RetroTalkingAvatar({
     };
 
     const handleMouseLeave = () => {
+        if (typeof window !== "undefined" && window.innerWidth < 1024) return; // Prevent hiding on mobile
         setIsHovered(false);
     };
 

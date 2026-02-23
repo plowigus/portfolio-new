@@ -1,124 +1,161 @@
 "use client";
 
-import {
-  IconReact,
-  IconNextjs,
-  IconTailwind,
-  IconTypescript,
-  IconNodejs,
-  IconFigma,
-  IconThreejs,
-} from "@/components/icons/TechIcons";
-import Code from "lucide-react/dist/esm/icons/code";
-import Cpu from "lucide-react/dist/esm/icons/cpu";
-import Zap from "lucide-react/dist/esm/icons/zap";
-import Layers from "lucide-react/dist/esm/icons/layers";
-
+import { useEffect, useState, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const SKILLS = [
-  { name: "React 19", icon: IconReact },
-  { name: "Next.js", icon: IconNextjs },
-  { name: "TypeScript", icon: IconTypescript },
-  { name: "Tailwind CSS", icon: IconTailwind },
-  { name: "Node.js", icon: IconNodejs },
-  { name: "Three.js", icon: IconThreejs },
-  { name: "Figma", icon: IconFigma },
-  // { name: "WordPress", icon: IconWordpress }, // Optional
+  "REACT 19",
+  "NEXT.JS",
+  "TYPESCRIPT",
+  "JAVASCRIPT",
+  "TAILWIND CSS",
+  "AI TOOLS",
 ];
 
+gsap.registerPlugin(ScrollTrigger);
+
 export function AboutSection() {
-  const focusAreas = [
-    {
-      title: "SYSTEM ARCH.",
-      description: "SCALABLE BACKEND & API FOUNDATIONS",
-      icon: Cpu,
-    },
-    {
-      title: "CREATIVE DEV",
-      description: "WEBGL & COMPLEX ANIMATIONS",
-      icon: Code,
-    },
-    {
-      title: "PERFORMANCE",
-      description: "CORE WEB VITALS & OPTIMIZATION",
-      icon: Zap,
-    },
-    {
-      title: "UI ENGINEERING",
-      description: "PIXEL-PERFECT INTERFACES",
-      icon: Layers,
-    },
-  ];
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<string[]>([""]);
+  const [showCursor, setShowCursor] = useState(true);
+  const [hasStarted, setHasStarted] = useState(false);
+  const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: "top 75%",
+      onEnter: () => {
+        if (!hasStartedRef.current) {
+          hasStartedRef.current = true;
+          setHasStarted(true);
+        }
+      }
+    });
+
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    let timeoutId: NodeJS.Timeout;
+    let isMounted = true;
+
+    const typeText = async (text: string, delay: number = 20) => {
+      for (let i = 0; i < text.length; i++) {
+        if (!isMounted) return;
+        await new Promise((resolve) => {
+          timeoutId = setTimeout(() => {
+            if (!isMounted) return;
+            setLines((prev) => {
+              const newLines = [...prev];
+              if (newLines.length === 0) newLines.push("");
+              newLines[newLines.length - 1] += text[i];
+              return newLines;
+            });
+            resolve(true);
+          }, delay);
+        });
+      }
+    };
+
+    const runSequence = async () => {
+      if (!isMounted) return;
+
+      await typeText("I WRITE CODE IN NEXT.JS, TYPESCRIPT, AND JS.");
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "", ""]);
+
+      await typeText("I USE AI IN MY DAILY WORKFLOW TO DRASTICALLY SPEED UP DEVELOPMENT AND DELIVERY.");
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "", ""]);
+
+      await typeText("AND THAT'S IT FOR NOW. WE'LL SEE WHAT COMES NEXT. I DON'T WANT TO OVERLOAD YOU WITH INFORMATION.");
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "", "READY.", ""]);
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 600); });
+      if (!isMounted) return;
+      await typeText("LOAD \"TECH_STACK\",8,1");
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 600); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "SEARCHING FOR TECH_STACK"]);
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "LOADING", ""]);
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 400); });
+      if (!isMounted) return;
+
+      const padLen = typeof window !== "undefined" && window.innerWidth < 400 ? 18 : typeof window !== "undefined" && window.innerWidth < 600 ? 22 : 28;
+      const align = (text: string) => text.padEnd(padLen, " ") + "OK";
+
+      for (const skill of SKILLS) {
+        await new Promise((resolve) => { timeoutId = setTimeout(resolve, 300); });
+        if (!isMounted) return;
+        setLines((prev) => [...prev, align(skill)]);
+      }
+
+      await new Promise((resolve) => { timeoutId = setTimeout(resolve, 600); });
+      if (!isMounted) return;
+      setLines((prev) => [...prev, "", "READY.", ""]);
+    };
+
+    runSequence();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [hasStarted]);
+
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor((prev) => !prev);
+    }, 500);
+    return () => clearInterval(cursorInterval);
+  }, []);
 
   return (
-    <section id="about" className="relative w-full bg-white text-neutral-900 border-t-2 border-neutral-900">
+    <section id="about" className="relative w-full text-[#887ecb] font-c64 min-h-screen py-8 md:py-12 bg-white flex flex-col items-center justify-center">
+      <div className="w-full max-w-[1080px] px-4">
 
-      <div className="max-w-7xl mx-auto px-6 md:px-12 bg-white">
-        <div className="border-l-2 border-r-2 border-neutral-900 grid grid-cols-1 lg:grid-cols-12 min-h-[80vh] border-b-2 lg:border-b-0">
+        <div className="border-[6px] border-[#887ecb] border-r-black border-b-black p-6 md:p-[20px] bg-[#352879] shadow-none md:shadow-[12px_12px_0_0_#000000] overflow-hidden min-h-[600px] md:min-h-[700px] w-full">
 
-          <div className="lg:col-span-7 flex flex-col justify-between border-b-2 lg:border-b-0 lg:border-r-2 border-neutral-900 p-8 md:p-12 lg:p-16">
-            <div>
-              <h2 className="text-sm font-mono font-bold uppercase tracking-widest mb-2">
-                01 — ABOUT
-              </h2>
-              <h3 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-[0.9] mb-12">
-                Digital <br />
-                Craftsmanship <br />
-                With <span className="text-orange-600">Soul</span>.
-              </h3>
-
-              <div className="space-y-6 text-lg md:text-xl font-medium leading-relaxed max-w-2xl">
-                <p>
-                  I DON'T JUST WRITE CODE. I ENGINEER EXPERIENCES.
-                  MY WORK EXISTS AT THE INTERSECTION OF RAW LOGIC AND AESTHETIC PRECISION.
-                </p>
-                <p className="text-neutral-500">
-                  NO BLOAT. NO NONSENSE. JUST PURE, PERFORMANT, AND SCALABLE SOLUTIONS.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-16 pt-8 border-t-2 border-neutral-900">
-              <p className="text-xs font-mono font-bold uppercase tracking-widest mb-6">
-                TECH STACK
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {SKILLS.map((skill) => (
-                  <div
-                    key={skill.name}
-                    className="group flex items-center gap-2 px-3 py-1.5 border-2 border-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors duration-0 cursor-pointer"
-                  >
-                    <skill.icon className="w-4 h-4" />
-                    <span className="text-sm font-bold uppercase tracking-tight">{skill.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="flex items-center gap-4 mb-8 md:mb-12 pb-6 border-b-4 border-[#887ecb]">
+            <div className="w-4 md:w-6 h-4 md:h-6 bg-[#887ecb] animate-pulse" />
+            <h2 className="text-xl md:text-3xl font-bold uppercase tracking-widest">
+              ABOUT_ME.TXT
+            </h2>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col">
-            {focusAreas.map((area) => (
-              <div
-                key={area.title}
-                className={`
-                  flex-1 flex flex-col justify-center p-8 border-b-2 border-neutral-900 last:border-b-0 
-                  hover:bg-orange-600 hover:text-white transition-colors duration-0 cursor-pointer group
-                `}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="text-2xl md:text-3xl font-black uppercase tracking-tighter">
-                    {area.title}
-                  </h4>
-                  <area.icon className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-0" />
-                </div>
-                <p className="font-mono text-xs uppercase tracking-widest opacity-60 group-hover:opacity-100">
-                  {area.description}
-                </p>
+          <div className="text-sm md:text-xl leading-loose md:leading-[2.5] uppercase wrap-break-word w-full h-full overflow-y-auto">
+            {lines.map((line, index) => (
+              <div key={index} className="whitespace-pre-wrap font-c64 mb-3" style={{ minHeight: "1em" }}>
+                {line}
+                {index === lines.length - 1 && showCursor && (
+                  <span className="inline-block w-3 sm:w-4 h-[1em] bg-[#887ecb] align-text-bottom ml-1"></span>
+                )}
               </div>
             ))}
           </div>
 
         </div>
+
       </div>
     </section>
   );

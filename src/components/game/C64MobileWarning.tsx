@@ -1,31 +1,18 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
-interface C64LoaderProps {
-    onStartLoading?: () => void;
-    isGameReady?: boolean;
-    onComplete?: () => void;
-}
-
-export default function C64Loader({ onStartLoading, isGameReady = false, onComplete }: C64LoaderProps) {
+export default function C64MobileWarning() {
     const [lines, setLines] = useState<string[]>([
         "**** COMMODORE 64 BASIC V2 ****",
         "64K RAM SYSTEM  38911 BASIC BYTES FREE",
         "READY.",
     ]);
-
     const [showCursor, setShowCursor] = useState(true);
-
-    const isGameReadyRef = useRef(isGameReady);
-
-    useEffect(() => {
-        isGameReadyRef.current = isGameReady;
-    }, [isGameReady]);
 
     useEffect(() => {
         let timeoutId: NodeJS.Timeout;
         let isMounted = true;
 
-        const typeText = async (text: string, delay: number = 100) => {
+        const typeText = async (text: string, delay: number = 50) => {
             for (let i = 0; i < text.length; i++) {
                 if (!isMounted) return;
                 await new Promise((resolve) => {
@@ -43,14 +30,14 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
         };
 
         const runSequence = async () => {
+            // Adjust padding based on screen width so it fits flawlessly on one line on narrow mobiles
+            const padLen = typeof window !== "undefined" && window.innerWidth < 400 ? 18 : window.innerWidth < 600 ? 22 : 28;
+            const align = (text: string) => text.padEnd(padLen, " ") + "FALSE";
 
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
             if (!isMounted) return;
 
-
             await typeText('LOAD "*",8,1');
-            if (!isMounted) return;
-
 
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
             if (!isMounted) return;
@@ -59,13 +46,6 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 1000); });
             if (!isMounted) return;
             setLines((prev) => [...prev, "LOADING"]);
-
-            if (onStartLoading) {
-                onStartLoading();
-            }
-
-
-            const align = (text: string) => text.padEnd(28, " ") + "OK";
 
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 600); });
             if (!isMounted) return;
@@ -79,25 +59,17 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
             if (!isMounted) return;
             setLines((prev) => [...prev, align("MODRA KAPUSTA")]);
 
-
-            while (!isGameReadyRef.current) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                if (!isMounted) return;
-            }
-
-
-            await new Promise((resolve) => { timeoutId = setTimeout(resolve, 1500); });
+            await new Promise((resolve) => { timeoutId = setTimeout(resolve, 1000); });
             if (!isMounted) return;
-            setLines((prev) => [...prev, "READY."]);
+            setLines((prev) => [...prev, "OUT OF MEMORY ERROR", "SILESIA RUNNER IS NOT AVAILABLE", "ON PHONES OR TABLETS.", ""]);
 
+            await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
+            if (!isMounted) return;
+            setLines((prev) => [...prev, "PLEASE SWITCH TO A DESKTOP.", "READY."]);
 
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
             if (!isMounted) return;
-            await typeText("RUN");
-
-
-            await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
-            if (onComplete) onComplete();
+            setLines((prev) => [...prev, ""]); // Empty line for the blinker
         };
 
         runSequence();
@@ -114,21 +86,16 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
     }, []);
 
     return (
-        <div className="w-[1080px] h-[450px] bg-[#887ecb] p-[12px] md:p-[16px] mx-auto shadow-2xl relative overflow-hidden">
-            <div className="w-full h-full bg-[#352879] text-[#887ecb] p-4 md:p-5 flex flex-col relative overflow-hidden border-2 border-[#887ecb]/20">
-                <div className="flex flex-col h-full font-c64 text-base md:text-lg tracking-wide leading-normal mt-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    {lines.map((line, index) => (
-                        <div
-                            key={index}
-                            className={`whitespace-pre-wrap font-c64 ${index === 0 ? "text-center mb-6" : "mb-1"}`}
-                        >
-                            {line}
-                            {index === lines.length - 1 && (
-                                <span className={`inline-block w-3 h-[1em] bg-[#887ecb] align-text-bottom ${showCursor ? 'opacity-100' : 'opacity-0'}`}></span>
-                            )}
-                        </div>
-                    ))}
-                </div>
+        <div className="w-full max-w-[1080px] h-[450px] mx-auto bg-[#887ecb] p-[10px] font-c64 text-[12px] sm:text-base md:text-xl uppercase overflow-hidden">
+            <div className="w-full h-full bg-[#352879] text-[#887ecb] p-4 font-c64 font-bold tracking-wider leading-normal overflow-y-auto">
+                {lines.map((line, index) => (
+                    <div key={index} className={`whitespace-pre-wrap font-c64 mb-1 ${index === 0 ? "text-center mb-8" : ""}`}>
+                        {line}
+                        {index === lines.length - 1 && showCursor && (
+                            <span className="inline-block w-3 sm:w-4 h-[1em] bg-[#887ecb] align-text-bottom ml-1"></span>
+                        )}
+                    </div>
+                ))}
             </div>
         </div>
     );

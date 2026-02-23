@@ -121,7 +121,7 @@ function ProjectCard({ project }: { project: Project }) {
 
 export function ProjectsSection() {
     return (
-        <section id="works" className="py-24 md:py-32 bg-zinc-950 relative overflow-hidden">
+        <section id="works" className="py-12 md:py-20 relative overflow-hidden bg-transparent w-full min-h-full">
             {/* Background Gradients */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-900/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-900/5 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
