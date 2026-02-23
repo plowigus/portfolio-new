@@ -9,7 +9,7 @@ export const useInput = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.repeat) return;
 
-            if (e.code === "ShiftRight") {
+            if (e.code === "ShiftRight" || e.code === "ShiftLeft") {
                 keys.current["Sprint"] = true;
             } else {
                 keys.current[e.code] = true;
@@ -22,7 +22,7 @@ export const useInput = () => {
         };
 
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.code === "ShiftRight") {
+            if (e.code === "ShiftRight" || e.code === "ShiftLeft") {
                 keys.current["Sprint"] = false;
             } else {
                 keys.current[e.code] = false;
