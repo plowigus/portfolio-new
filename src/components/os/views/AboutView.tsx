@@ -27,12 +27,15 @@ export function AboutView({ onBootComplete }: AboutViewProps) {
             { text: "NO NEED TO OVERLOAD YOUR SYSTEM MEMORY WITH MORE TEXT.", delay: 400 },
             { text: "-------------", delay: 50 },
             { text: "INITIATING TECH STACK SCAN...", delay: 50 },
-            { text: "TYPESCRIPT         TRUE", delay: 400 },
-            { text: "JAVASCRIPT         TRUE", delay: 200 },
-            { text: "REACT              TRUE", delay: 200 },
-            { text: "NEXT.JS            TRUE", delay: 200 },
-            { text: "TAILWIND V4        TRUE", delay: 200 },
-            { text: "BOOTSTRAP          TRUE", delay: 200 },
+            { text: "NEXT.JS                 OK", delay: 200 },
+            { text: "REACT                   OK", delay: 200 },
+            { text: "TYPESCRIPT              OK", delay: 400 },
+            { text: "JAVASCRIPT              OK", delay: 200 },
+            { text: "TAILWIND V4             OK", delay: 200 },
+            { text: "BOOTSTRAP               OK", delay: 200 },
+            { text: "FIGMA                   OK", delay: 200 },
+            { text: "GSAP                    OK", delay: 200 },
+            { text: "WORDPRESS               OK", delay: 200 },
         ];
 
         const runSequence = async () => {
