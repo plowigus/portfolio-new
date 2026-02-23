@@ -8,9 +8,6 @@ export class AssetManager {
 
     public async loadAssets() {
 
-        if (PIXI.Assets.cache.has('/assets/character/idle.json')) {
-            // Cache check
-        }
 
         const loadSafe = async (path: string) => {
             if (PIXI.Assets.cache.has(path)) {
@@ -19,7 +16,6 @@ export class AssetManager {
             return PIXI.Assets.load(path);
         };
 
-        // 1. Ładujemy WSZYSTKO w jednym Promise.all (najszybsza metoda)
         const [
             idleSheet, idleTex,
             runSheet, runTex,
@@ -33,22 +29,23 @@ export class AssetManager {
             kickTex,
             punchTex,
             faceTex,
-            // Nowe assety:
             klopsztangaTex,
             oponyTex,
             metaTex,
             klasykSheet, klasikTex,
             fireSheet, fireTex,
             trashballSheet, trashballTex,
-            pigeonSheet, pigeonTex, // 🐦 PIGEON
-            pigeonPoopSheet, pigeonPoopTex, // 💩 PIGEON POOP
+            pigeonSheet, pigeonTex,
+            pigeonPoopSheet, pigeonPoopTex,
             wozekTex,
             wheelTex,
-            bumTex, // 🛋️ BUM
-            kafelokTex, // 🧱 KAFELOK
-            szolaTex,   // 🏗️ SZOLA (Elevator)
+            bumTex,
+            kafelokTex,
+            szolaTex,
 
-            obiodSheet, obiodTex // 🛠️ Tutaj ładujemy roladę normalnie
+            obiodSheet, obiodTex,
+            serceTattooTex,
+            momoSheet, momoTex
         ] = await Promise.all([
             loadSafe('/assets/character/idle.json'),
             loadSafe('/assets/character/idle.png'),
@@ -69,7 +66,6 @@ export class AssetManager {
             loadSafe('/assets/character/kick.png'),
             loadSafe('/assets/character/punch.png'),
             loadSafe('/assets/ui/face.png'),
-            // Obstacles & Items loaded in parallel:
             loadSafe('/assets/obstacles/klopsztanga.png'),
             loadSafe('/assets/obstacles/opony.png'),
             loadSafe('/assets/obstacles/meta.png'),
@@ -85,14 +81,16 @@ export class AssetManager {
             loadSafe('/assets/items/pigeon_poop.png'),
             loadSafe('/assets/items/wozek.png'),
             loadSafe('/assets/items/wheel.png'),
-            loadSafe('/assets/obstacles/bum.png'), // 🛋️ Bum
-            loadSafe('/assets/obstacles/kaflok.png'), // 🧱 Kafelok (Note: kaflok.png)
-            loadSafe('/assets/items/szola.png'),       // 🏗️ Szola
-            loadSafe('/assets/items/obiod.json'), // 🛠️ JSON
-            loadSafe('/assets/items/obiod.png'),  // 🛠️ PNG
+            loadSafe('/assets/obstacles/bum.png'),
+            loadSafe('/assets/obstacles/kaflok.png'), // Note: kaflok.png
+            loadSafe('/assets/items/szola.png'),
+            loadSafe('/assets/items/obiod.json'),
+            loadSafe('/assets/items/obiod.png'),
+            loadSafe('/assets/items/serce_tattoo.png'),
+            loadSafe('/assets/items/momo.json'),
+            loadSafe('/assets/items/momo.png'),
         ]);
 
-        // 2. Ustawiamy Pixel Art Mode (Nearest Neighbor)
         const setNearest = (tex: any) => { if (tex && tex.source) tex.source.scaleMode = 'nearest'; };
 
         setNearest(floorTex);
@@ -114,9 +112,9 @@ export class AssetManager {
         setNearest(bumTex);
         setNearest(kafelokTex);
         setNearest(szolaTex);
-        setNearest(obiodTex); // 🛠️ Pixel art dla rolady
-
-        // 3. Krojenie twarzy (UI)
+        setNearest(obiodTex);
+        setNearest(serceTattooTex);
+        setNearest(momoTex);
         const faceW = faceTex.width / 2;
         const faceH = faceTex.height;
         const faceClosed = new PIXI.Texture({
@@ -128,7 +126,6 @@ export class AssetManager {
             frame: new PIXI.Rectangle(faceW, 0, faceW, faceH)
         });
 
-        // 4. Przypisanie tekstur statycznych
         this.textures = {
             floor: floorTex,
             background: bgTex,
@@ -141,10 +138,10 @@ export class AssetManager {
             wheel: wheelTex,
             bum: bumTex,
             kafelok: kafelokTex,
-            szola: szolaTex
+            szola: szolaTex,
+            serce_tattoo: serceTattooTex
         };
 
-        // 5. Parsowanie animacji (wszystko tą samą metodą)
         this.animations = {
             idle: this.parseFrames(idleSheet, idleTex),
             run: this.parseFrames(runSheet, runTex),
@@ -156,22 +153,22 @@ export class AssetManager {
             klasyk: this.parseFrames(klasykSheet, klasikTex),
             fire: this.parseFrames(fireSheet, fireTex),
             trashball: this.parseFrames(trashballSheet, trashballTex),
-            pigeon: this.parseFrames(pigeonSheet, pigeonTex), // 🐦 PIGEON
-            pigeon_poop: this.parseFrames(pigeonPoopSheet, pigeonPoopTex), // 💩 PIGEON POOP
+            pigeon: this.parseFrames(pigeonSheet, pigeonTex),
+            pigeon_poop: this.parseFrames(pigeonPoopSheet, pigeonPoopTex),
 
 
-            // 🛠️ Rolada ładowana tak samo jak reszta:
             obiod: this.parseFrames(obiodSheet, obiodTex),
 
             face: [faceClosed, faceOpen],
 
-            // Combo Animations
             kickFirst: this.parseFrames(getAnimationFrames('kick', 'kick-first'), kickTex),
             kickSecond: this.parseFrames(getAnimationFrames('kick', 'kick-second'), kickTex),
 
             punchFirst: this.parseFrames(getAnimationFrames('punch', 'punch-first'), punchTex),
             punchSecond: this.parseFrames(getAnimationFrames('punch', 'punch-sec'), punchTex),
             punchThird: this.parseFrames(getAnimationFrames('punch', 'punch-third'), punchTex),
+
+            momo: this.parseFrames(momoSheet, momoTex),
         };
     }
 

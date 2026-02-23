@@ -56,7 +56,6 @@ export function AboutSection() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 bg-white">
         <div className="border-l-2 border-r-2 border-neutral-900 grid grid-cols-1 lg:grid-cols-12 min-h-[80vh] border-b-2 lg:border-b-0">
 
-          {/* Left Column: Manifesto */}
           <div className="lg:col-span-7 flex flex-col justify-between border-b-2 lg:border-b-0 lg:border-r-2 border-neutral-900 p-8 md:p-12 lg:p-16">
             <div>
               <h2 className="text-sm font-mono font-bold uppercase tracking-widest mb-2">
@@ -97,7 +96,6 @@ export function AboutSection() {
             </div>
           </div>
 
-          {/* Right Column: Grid Focus */}
           <div className="lg:col-span-5 flex flex-col">
             {focusAreas.map((area) => (
               <div

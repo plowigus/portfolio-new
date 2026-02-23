@@ -32,7 +32,6 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
 
             renderer.app.stage.sortableChildren = true;
 
-            // 1. Tworzymy Spawner
             const spawner = new SpawnerSystem(
                 physics.engine,
                 renderer.app,
@@ -40,13 +39,9 @@ export const useGameSystems = (containerRef: React.RefObject<HTMLDivElement | nu
                 assetManager.animations
             );
 
-            // 2. Tworzymy EnemyManager (TERAZ Z assetManager!)
+
             const enemyManager = new EnemyManager(physics.engine, renderer.app, assetManager);
-
-            // 3. Łączymy systemy (Kluczowe dla spawnowania wrogów przez spawner)
             spawner.setEnemyManager(enemyManager);
-
-            // 4. Dopiero teraz generujemy platformy (bo w środku jest spawn testowego wózka)
             spawner.initPlatforms();
 
             physicsRef.current = physics;

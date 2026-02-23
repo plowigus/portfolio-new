@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Noise from '../animation/Noise';
 import { TalkingHead } from './TalkingHead';
 import { HighScoreOverlay } from './HighScoreOverlay';
+import { MomoQuizModal } from './MomoQuizModal';
 import { getTopScores } from '@/app/actions/highscore';
 
 interface GameUIProps {
@@ -12,7 +13,8 @@ interface GameUIProps {
     onExit: () => void;
     activeQuote: string | null;
     assetManager: any;
-    // Arena Props removed
+    momoQuizActive?: boolean;
+    onMomoAnswer?: (isCorrect: boolean) => void;
 }
 
 export const GameUI: React.FC<GameUIProps> = ({
@@ -22,7 +24,9 @@ export const GameUI: React.FC<GameUIProps> = ({
     onRestart,
     onExit,
     activeQuote,
-    assetManager
+    assetManager,
+    momoQuizActive,
+    onMomoAnswer
 }) => {
     const [selectedOption, setSelectedOption] = useState<'YES' | 'NO'>('YES');
     const [showHighScoreFlow, setShowHighScoreFlow] = useState(false);
@@ -34,7 +38,6 @@ export const GameUI: React.FC<GameUIProps> = ({
         faceOpen: assetManager.textures.faceOpen
     } : null;
 
-    // Fetch Global High Score
     useEffect(() => {
         const fetchGlobalHigh = async () => {
             try {
@@ -49,7 +52,6 @@ export const GameUI: React.FC<GameUIProps> = ({
         fetchGlobalHigh();
     }, []);
 
-    // Game Over Logic ...
     useEffect(() => {
         if (isGameOver) {
             const checkQualification = async () => {
@@ -79,7 +81,6 @@ export const GameUI: React.FC<GameUIProps> = ({
         }
     }, [isGameOver, score]);
 
-    // Input Handling ...
     useEffect(() => {
         if (!isGameOver || showHighScoreFlow || isCheckingScore) return;
 
@@ -104,7 +105,6 @@ export const GameUI: React.FC<GameUIProps> = ({
 
             <TalkingHead quote={activeQuote} textures={uiTextures} />
 
-            {/* Score & Lives */}
             <div className="absolute top-4 left-6 z-20 flex flex-col gap-1">
                 <div className="flex items-center gap-3">
                     <img
@@ -136,12 +136,10 @@ export const GameUI: React.FC<GameUIProps> = ({
 
             </div>
 
-            {/* High Score */}
             <div className="absolute top-4 right-6 z-20 flex items-center gap-3">
                 <span className="text-xl font-bold text-yellow-500 drop-shadow-[2px_2px_0_#000]">HIGH SCORE: {highScore}</span>
             </div>
 
-            {/* High Score Overlay */}
             {showHighScoreFlow && (
                 <div className="absolute inset-0 z-50 pointer-events-auto">
                     <HighScoreOverlay
@@ -151,7 +149,6 @@ export const GameUI: React.FC<GameUIProps> = ({
                 </div>
             )}
 
-            {/* Game Over Screen */}
             {isGameOver && !showHighScoreFlow && !isCheckingScore && (
                 <div className="absolute inset-0 z-50 pointer-events-auto bg-black/80 flex flex-col items-center justify-center">
                     <div className="absolute inset-0 opacity-20 pointer-events-none">
@@ -186,6 +183,10 @@ export const GameUI: React.FC<GameUIProps> = ({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {momoQuizActive && onMomoAnswer && (
+                <MomoQuizModal onAnswer={onMomoAnswer} />
             )}
 
             <style jsx>{`

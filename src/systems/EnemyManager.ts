@@ -104,35 +104,22 @@ export class EnemyManager {
                 anim.play();
                 anim.anchor.set(redCfg.anchorX || 0.5, redCfg.anchorY || 0.5);
                 anim.scale.set(redCfg.scale || 0.8);
-                // Adjust position
-                // Visual offsets based on config
-                // NOTE: anim.x/y set later, but we can wrap in container if needed. 
-                // Since we assume simple sprite sync, we'll just return the sprite.
                 visual = anim;
 
                 // --- Fire FX ---
                 if (redCfg.fireAssetName && this.assetManager.animations[redCfg.fireAssetName]) {
                     const fireAnim = new PIXI.AnimatedSprite(this.assetManager.animations[redCfg.fireAssetName]);
-                    fireAnim.anchor.set(1, 0.5); // Grows left from gun
+                    fireAnim.anchor.set(1, 0.5);
                     fireAnim.scale.set(redCfg.fireScale || 1.0);
                     fireAnim.x = (redCfg.fireOffsetX || -40);
                     fireAnim.y = (redCfg.fireOffsetY || -15);
                     fireAnim.animationSpeed = redCfg.fireAnimationSpeed || 0.3;
                     fireAnim.visible = false;
-                    fireAnim.loop = true; // or false if oneshot, but we control visibility
+                    fireAnim.loop = true;
 
-                    // We need a container to hold both body and fire if we want them to move together easily
-                    // But 'anim' is the visual. So we can add fire as child of anim?
-                    // AnimatedSprite extends Sprite extends Container. Yes.
                     anim.addChild(fireAnim);
 
-                    // Store ref in enemy object later, but we need to extract it or pass it.
-                    // Actually, we can just attach it to the visual for now, but we need a reference in `this.enemies`.
-                    // We'll attach it temporarily to the visual object as a property if we can, or return it.
-                    // Better: `visual` is assigned to `enemy.sprite`. We can access children? 
-                    // Or we can assume enemy creation logic below needs modification to accept fireSprite.
-                    // Let's modify the `visual` creation to include it, and then extract it? 
-                    // No, `spawnEnemyAt` creates the `Enemy` object at the end. We can store it in a local var.
+
                     (visual as any).fireSpriteRef = fireAnim;
                 }
             } else {
@@ -148,10 +135,8 @@ export class EnemyManager {
                 const anim = new PIXI.AnimatedSprite(this.assetManager.animations[yellowCfg.assetName || 'pigeon']);
                 anim.animationSpeed = yellowCfg.animationSpeed || 0.15;
                 anim.play();
-                anim.anchor.set(0.5); // Center anchor for rotation
+                anim.anchor.set(0.5);
                 anim.scale.set(yellowCfg.scale || 1);
-
-                // Visual Offsets
                 anim.x += (yellowCfg.visualOffsetX || 0);
                 anim.y += (yellowCfg.visualOffsetY || 0);
 
@@ -170,7 +155,6 @@ export class EnemyManager {
         visual.zIndex = 50;
         this.app.stage.addChild(visual);
 
-        // --- 2. PHYSICS ---
         const commonProps = {
             label: `enemy_${type}`,
             collisionFilter: {
@@ -209,7 +193,6 @@ export class EnemyManager {
 
         Matter.World.add(this.engine.world, body);
 
-        // --- 3. DINNER (OBIOD) SPAWN ---
         let heldItem: HeldItem | undefined = undefined;
 
         if (type === 'BLUE') {
@@ -360,19 +343,11 @@ export class EnemyManager {
         }
 
         sprite.x = x; sprite.y = y;
-        // 💩 Poop behind ground (zIndex 2)
         sprite.zIndex = (yellowCfg.projectileAsset === 'pigeon_poop') ? 1 : 6;
         this.app.stage.addChild(sprite);
 
         const hitboxSize = yellowCfg.projectileHitboxSize || pcfg.size;
 
-        // Note: For rectangle body, width/height is 2*size usually, but here we use hitboxSize maybe as radius or half-width?
-        // Original code: pcfg.size * 2.  hitboxSize is likely radius.
-        // Let's assume hitboxSize is RADIUS roughly, so width = hitboxSize * 2.
-        // But config says `projectileHitboxSize: 12`. 12*2 = 24.
-        // If we want a circle for the poop (it drops), maybe circle body is better?
-        // Original was rectangle. Let's stick to rectangle for now but sized correctly.
-        // If hitboxSize is 12, then box is 24x24.
 
         const bodySize = hitboxSize * 2;
 
@@ -388,7 +363,7 @@ export class EnemyManager {
     public update(delta: number, playerBody: Matter.Body, gameState: any, worldSpeed: number = 0) {
         if (this.debugGraphics) this.debugGraphics.clear();
 
-        // Debug hitboxy
+
         if (GAME_CONFIG.debugMode) {
             this.enemies.forEach(enemy => {
                 if (enemy.type === 'BLUE') {
@@ -404,7 +379,7 @@ export class EnemyManager {
             });
         }
 
-        // Hitbox Ataku Gracza
+
         let activeHitbox: { x: number; y: number; w: number; h: number } | null = null;
         if (gameState.attackState.isPlaying) {
             const attackType = gameState.attackState.type === 'kick' ? 'KICK' : 'PUNCH';
@@ -429,19 +404,17 @@ export class EnemyManager {
             const enemy = this.enemies[i];
             const cfg = GAME_CONFIG.ENEMY_CONFIG[enemy.type] as any;
 
-            // 1. World Scroll
+
             if (worldSpeed > 0) Matter.Body.translate(enemy.body, { x: -worldSpeed * delta, y: 0 });
 
-            // 2. Behavior
-            if (enemy.type === 'BLUE') {
-                // --- MANUAL GRAVITY & MOVEMENT ---
 
-                // Activation Check
+            if (enemy.type === 'BLUE') {
+
                 const activationDistance = GAME_CONFIG.width + 150;
                 const isActive = enemy.body.position.x < activationDistance;
 
                 if (!isActive) {
-                    // Idle state (waiting for player to approach)
+
                     let newVy = enemy.body.velocity.y + (gravity * delta);
                     if (newVy > maxFallSpeed) newVy = maxFallSpeed;
 
@@ -449,7 +422,7 @@ export class EnemyManager {
 
                     enemy.isGrounded = Math.abs(enemy.body.velocity.y) < 0.5;
                 } else {
-                    // Active State
+
                     let newVy = enemy.body.velocity.y + (gravity * delta);
                     if (newVy > maxFallSpeed) newVy = maxFallSpeed;
 
@@ -460,7 +433,7 @@ export class EnemyManager {
                         y: newVy
                     });
 
-                    // Rotacja kół (wizualna)
+
                     if (enemy.wheels) {
                         const spin = (cfg.rotationSpeed || 0.15) * delta;
                         enemy.wheels.forEach(wheel => { wheel.rotation -= spin; });
@@ -477,7 +450,6 @@ export class EnemyManager {
                         enemy.attackTimer = 0;
                         this.spawnBullet(enemy.body.position.x, enemy.body.position.y, playerX);
 
-                        // Show Fire
                         if (enemy.fireSprite) {
                             enemy.fireSprite.visible = true;
                             enemy.fireSprite.gotoAndPlay(0);
@@ -485,14 +457,9 @@ export class EnemyManager {
                         }
                     }
 
-                    // Handle Fire Duration
+
                     if (enemy.fireTimer && enemy.fireTimer > 0) {
-                        enemy.fireTimer -= 1; // using frames approach or delta? Config says frames.
-                        // But update uses delta (fractional). Let's assume delta ~ 1.0 for 60fps.
-                        // If delta is time-based, we might need to adjust. 
-                        // Let's stick to simple decrement for now or use delta if game is time-based.
-                        // The game seems to use delta. Let's start with decrementing by delta.
-                        // enemy.fireTimer -= delta; 
+                        enemy.fireTimer -= 1;
 
                         if (enemy.fireTimer <= 0) {
                             enemy.fireTimer = 0;
@@ -518,27 +485,19 @@ export class EnemyManager {
                 }
             }
 
-            // Sync Sprite
+
             if (enemy.sprite) {
                 enemy.sprite.x = enemy.body.position.x;
                 enemy.sprite.y = enemy.body.position.y;
 
-                // 🛠️ TERAZ WÓZEK TEŻ SIĘ OBRACA!
-                // Wcześniej było: if (enemy.type !== 'BLUE') ...
-                // Teraz pozwalamy BLUE na rotację sprite'a zgodnie z ciałem fizycznym.
                 enemy.sprite.rotation = enemy.body.angle;
             }
 
-            // --- DINNER (OBIOD) UPDATE ---
-            // Aktualizacja pozycji obiadu (musi uwzględniać rotację wózka!)
+
             if (enemy.heldItem && enemy.heldItem.active) {
                 const blueCfg = GAME_CONFIG.ENEMY_CONFIG.BLUE as any;
-
-                // Offsety lokalne (względem środka wózka)
                 const localX = blueCfg.dinnerOffsetX || 0;
                 const localY = blueCfg.dinnerOffsetY || blueCfg.dinnerOffset || -90;
-
-                // Obracamy offsety zgodnie z kątem wózka (Macierz rotacji 2D)
                 const angle = enemy.body.angle;
                 const rotatedX = localX * Math.cos(angle) - localY * Math.sin(angle);
                 const rotatedY = localX * Math.sin(angle) + localY * Math.cos(angle);
@@ -547,12 +506,11 @@ export class EnemyManager {
                 const targetY = enemy.body.position.y + rotatedY;
 
                 Matter.Body.setPosition(enemy.heldItem.body, { x: targetX, y: targetY });
-                // Resetujemy prędkość obiadu, żeby nie "odleciał" od wózka
                 Matter.Body.setVelocity(enemy.heldItem.body, { x: 0, y: 0 });
 
                 enemy.heldItem.sprite.x = targetX;
                 enemy.heldItem.sprite.y = targetY;
-                enemy.heldItem.sprite.rotation = angle; // Obiad też się obraca
+                enemy.heldItem.sprite.rotation = angle;
 
                 if (Matter.Collision.collides(playerBody, enemy.heldItem.body)) {
                     gameState.playerHealedThisFrame = true;
@@ -567,13 +525,11 @@ export class EnemyManager {
                 }
             }
 
-            // Despawn off-screen
             if (enemy.body.position.y > GAME_CONFIG.height + 200 || enemy.body.position.x < -100) {
                 this.removeEnemy(i);
                 continue;
             }
 
-            // Hit Logic
             if (activeHitbox) {
                 const eb = enemy.body.bounds;
                 const overlaps = activeHitbox.x < eb.max.x && activeHitbox.x + activeHitbox.w > eb.min.x &&
@@ -588,13 +544,11 @@ export class EnemyManager {
                 }
             }
 
-            // Kolizja Gracz vs Wróg
             if (Matter.Collision.collides(playerBody, enemy.body)) {
                 if (!gameState.attackState.isPlaying) {
                     const enemyTopEdge = enemy.body.bounds.min.y;
                     const playerBottomEdge = playerBody.bounds.max.y;
                     const tolerance = cfg.collisionOffsetTop || -10;
-                    // Uwzględniamy kąt przy sprawdzaniu "czy jest na górze" (prosty test)
                     const isAbove = playerBottomEdge <= (enemyTopEdge - tolerance);
 
                     if (enemy.type === 'BLUE' && isAbove) {
@@ -608,7 +562,6 @@ export class EnemyManager {
             }
         }
 
-        // Projectiles Loop
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const proj = this.projectiles[i];
             if (worldSpeed > 0) Matter.Body.translate(proj.body, { x: -worldSpeed * delta, y: 0 });
@@ -616,8 +569,6 @@ export class EnemyManager {
             if (proj.body.position.y > GAME_CONFIG.height + 100 || proj.body.position.x < -100) { this.removeProjectile(i); continue; }
             if (Matter.Collision.collides(playerBody, proj.body)) { gameState.playerHitThisFrame = true; Matter.Body.setVelocity(playerBody, { x: -5, y: -5 }); this.removeProjectile(i); }
             if (proj.type === 'BOMB' && !proj.body.isStatic) { Matter.Body.applyForce(proj.body, proj.body.position, { x: 0, y: (GAME_CONFIG.ENEMY_CONFIG.PROJECTILE as any).bombGravity * 0.001 }); }
-
-            // Rotation for Trash Ball (Tumbling)
             if (proj.isTumbling) {
                 proj.sprite.rotation -= 0.15 * delta;
             }

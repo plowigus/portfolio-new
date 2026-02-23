@@ -40,7 +40,6 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
 
     return (
         <div className="absolute inset-0 z-50 flex items-center justify-end bg-black text-white overflow-hidden">
-            {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <Image
                     src="/assets/backgrounds/intro-bg.png"
@@ -51,13 +50,10 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
                 />
             </div>
 
-            {/* Gradient Overlay for better text readability on the right */}
             <div className="absolute inset-0 z-10 bg-linear-to-r from-transparent via-black/20 to-black/80" />
 
-            {/* Content Container */}
             <div className="relative z-20 flex flex-col items-end pr-16 pb-8 h-full justify-center">
 
-                {/* Main Title */}
                 <div className="flex flex-col items-end mb-12">
                     <h1 className="font-thuast text-8xl md:text-7xl text-red-700 drop-shadow-[5px_5px_0_rgba(0,0,0,0.8)] leading-none text-right">
                         SILESIA
@@ -67,9 +63,7 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
                     </h1>
                 </div>
 
-                {/* Menu */}
                 <div className="flex flex-col items-end gap-2">
-                    {/* <h2 className="font-retro text-2xl text-blue-400 mb-2 tracking-widest drop-shadow-md">MENU:</h2> */}
 
                     <ul className="flex flex-col items-end gap-1">
                         {MENU_ITEMS.map((item, index) => {
@@ -93,7 +87,6 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onStartGame, onShowHig
                     </ul>
                 </div>
 
-                {/* Version / Info Footer */}
                 <div className="absolute bottom-4 right-5 text-white/30 font-mono text-xs text-right">
                     v1.1 • PRESS ENTER TO SELECT
                 </div>

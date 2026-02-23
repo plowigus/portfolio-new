@@ -6,16 +6,11 @@ export class RendererSystem {
     public app: PIXI.Application;
     public container: HTMLDivElement | null = null;
     public debugGraphics: PIXI.Graphics;
-    // private stats: Stats;
 
     constructor() {
         this.app = new PIXI.Application();
         this.debugGraphics = new PIXI.Graphics();
 
-        // this.stats = new Stats();
-        // this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-        // // Custom styling to ensure visibility
-        // this.stats.dom.style.cssText = 'position:absolute;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000;';
     }
 
     public async init(container: HTMLDivElement) {
@@ -27,9 +22,7 @@ export class RendererSystem {
         });
 
         container.appendChild(this.app.canvas);
-        // container.appendChild(this.stats.dom);
 
-        // 🛠️ POPRAWKA: Ustawiamy bardzo wysoki zIndex, żeby debug był zawsze na wierzchu
         this.debugGraphics.zIndex = 9999;
         this.app.stage.addChild(this.debugGraphics);
     }
@@ -53,9 +46,8 @@ export class RendererSystem {
         }
 
         this.debugGraphics.clear();
-        // Ramka ekranu
         this.debugGraphics.rect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
-        this.debugGraphics.stroke({ width: 2, color: 0x00ff00, alpha: 0.3 }); // Zmieniłem na zielony, lepiej widać
+        this.debugGraphics.stroke({ width: 2, color: 0x00ff00, alpha: 0.3 });
 
         bodies.forEach(body => {
             if (body.vertices.length < 1) return;
@@ -68,7 +60,7 @@ export class RendererSystem {
 
             let color = 0x000000;
             if (body.label === 'player') color = 0xff0000;
-            else if (body.label.includes('obstacle') || body.label.includes('coin')) color = 0xffff00; // Żółty dla przeszkód/monet
+            else if (body.label.includes('obstacle') || body.label.includes('coin')) color = 0xffff00;
             else if (body.label === 'ground') color = 0x0000ff;
 
             this.debugGraphics.stroke({ width: 2, color: color });
@@ -78,16 +70,11 @@ export class RendererSystem {
     public cleanup() {
         if (this.app) {
             try {
-                // Modified: Do NOT destroy children or textures, just the app instance.
-                // React strict mode or fast refresh might cause re-mounts, and we want to reuse textures.
                 this.app.destroy(true, { children: true, texture: false, textureSource: false });
             } catch (e) {
                 console.warn("Renderer cleanup error:", e);
             }
         }
-        // Remove stats from DOM
-        // if (this.stats.dom.parentElement) {
-        //     this.stats.dom.parentElement.removeChild(this.stats.dom);
-        // }
+
     }
 }

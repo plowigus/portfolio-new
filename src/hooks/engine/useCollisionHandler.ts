@@ -17,6 +17,7 @@ interface CollisionHandlerProps {
     setScore: (score: number) => void;
     setActiveQuote: (quote: string | null) => void;
     keys: React.MutableRefObject<any>;
+    setMomoQuizActive?: (active: boolean) => void;
 }
 
 export const useCollisionHandler = ({
@@ -29,18 +30,17 @@ export const useCollisionHandler = ({
     assetManager,
     setScore,
     setActiveQuote,
-    keys
+    keys,
+    setMomoQuizActive
 }: CollisionHandlerProps) => {
 
     const triggerGameOver = useCallback((obstacleType: 'low' | 'high' = 'low') => {
         if (!gameState.current.isGameOverLogic || !physics || !renderer || !character || !assetManager) {
-            // If already game over, don't run again (unless we want to allow multiple triggers? No, loop flag handles it)
         }
 
         if (gameState.current.isGameOverLogic) return;
         gameState.current.isGameOverLogic = true;
 
-        // Clear existing trails (e.g. from sprinting)
         trailsRef.current.forEach(t => {
             if (!t.destroyed) {
                 renderer!.app.stage.removeChild(t);
@@ -50,19 +50,17 @@ export const useCollisionHandler = ({
         trailsRef.current = [];
 
         gameState.current.isDying = true;
-        physics!.engine.timing.timeScale = GAME_CONFIG.deathSlowMotionScale; // Slow Motion
+        physics!.engine.timing.timeScale = GAME_CONFIG.deathSlowMotionScale;
 
         character!.textures = assetManager!.animations.dead;
         character!.loop = false;
         character!.play();
 
-        // Select knockback values based on obstacle type
         const kx = obstacleType === 'high' ? GAME_CONFIG.knockbackHighX : GAME_CONFIG.knockbackX;
         const ky = obstacleType === 'high' ? GAME_CONFIG.knockbackHighY : GAME_CONFIG.knockbackY;
 
         gameState.current.vx = -kx;
 
-        // Apply knockback physics
         if (physics!.playerBody) {
             const isInAir = !physics!.isTouchingGround;
             const detachX = isInAir ? 20 : 5;
@@ -80,7 +78,6 @@ export const useCollisionHandler = ({
                 y: -ky
             });
         }
-        console.log(`💥 GAME OVER - Slow Motion Start (${obstacleType} obstacle)`);
     }, [physics, renderer, character, assetManager, gameState, trailsRef]);
 
     useEffect(() => {
@@ -90,7 +87,6 @@ export const useCollisionHandler = ({
             event.pairs.forEach((pair) => {
                 const { bodyA, bodyB } = pair;
 
-                // Coin Collection
                 const coinBody = bodyA.label === 'coin' ? bodyA : (bodyB.label === 'coin' ? bodyB : null);
                 if (coinBody && spawner) {
                     const currentScore = spawner.coins.find(c => c.body === coinBody);
@@ -102,7 +98,7 @@ export const useCollisionHandler = ({
                         setScore(newScore);
 
 
-                        if (newScore > 0 && newScore % 2000 === 0) {
+                        if (newScore > 0 && newScore % 150 === 0) {
                             const quotes = GAME_CONFIG.SILESIAN_QUOTES;
                             const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
                             setActiveQuote(randomQuote);
@@ -114,7 +110,6 @@ export const useCollisionHandler = ({
                     }
                 }
 
-                // Obstacle Collision
                 const obsBody = bodyA.label.includes('obstacle') ? bodyA : (bodyB.label.includes('obstacle') ? bodyB : null);
 
                 if (obsBody && !obsBody.label.includes('coin')) {
@@ -123,12 +118,23 @@ export const useCollisionHandler = ({
                         const isHigh = obsBody.label === 'obstacle_high';
                         const isSliding = keys.current["ArrowDown"] || keys.current["KeyS"];
 
-                        // Dodge Logic
-                        if (isHigh && isSliding) {
-                            // Successful dodge
-                        } else {
+                        const isDodgingHighObstacle = isHigh && isSliding;
+                        if (!isDodgingHighObstacle) {
                             triggerGameOver(isHigh ? 'high' : 'low');
                         }
+                    }
+                }
+
+                const momoBody = bodyA.label === 'momo_sensor' ? bodyA : (bodyB.label === 'momo_sensor' ? bodyB : null);
+                if (momoBody) {
+                    const otherBody = bodyA === momoBody ? bodyB : bodyA;
+                    if (otherBody.label === 'player' && gameState.current.momoQuizState === 'inactive') {
+                        gameState.current.momoQuizState = 'active';
+                        gameState.current.vx = 0;
+                        gameState.current.worldSpeed = 0;
+                        if (setMomoQuizActive) setMomoQuizActive(true);
+
+                        Matter.World.remove(physics!.engine.world, momoBody);
                     }
                 }
             });
@@ -139,7 +145,7 @@ export const useCollisionHandler = ({
         return () => {
             Matter.Events.off(physics.engine, 'collisionStart', onCollision);
         };
-    }, [physics, spawner, triggerGameOver, keys, setScore, gameState]);
+    }, [physics, spawner, triggerGameOver, keys, setScore, gameState, setMomoQuizActive]);
 
     return { triggerGameOver };
 };

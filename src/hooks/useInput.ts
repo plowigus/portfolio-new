@@ -9,7 +9,6 @@ export const useInput = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.repeat) return;
 
-            // Map ControlRight to "Sprint"
             if (e.code === "ShiftRight") {
                 keys.current["Sprint"] = true;
             } else {

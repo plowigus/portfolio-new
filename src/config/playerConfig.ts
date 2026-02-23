@@ -1,14 +1,14 @@
 export interface PlayerAnimationConfig {
-    animationSpeed: number; // Speed of playback (0.1 - 1.0)
-    scale: { x: number, y: number }; // Visual scaling (e.g., 1 or 2)
-    anchor: { x: number, y: number }; // Pivot point (usually 0.5, 0.5)
-    offset: { x: number, y: number }; // Visual offset in pixels from the physics body center
-    flipCorrectionX?: number; // Pixel offset applied ONLY when facing left
+    animationSpeed: number;
+    scale: { x: number, y: number };
+    anchor: { x: number, y: number };
+    offset: { x: number, y: number };
+    flipCorrectionX?: number;
     attackHitbox?: {
         width: number;
         height: number;
-        offsetX: number; // Distance in front of the player center
-        offsetY: number; // Vertical offset from player center
+        offsetX: number;
+        offsetY: number;
     };
 }
 
@@ -20,7 +20,7 @@ export const PLAYER_CONFIG: Record<string, PlayerAnimationConfig> = {
         offset: { x: 0, y: 0 }
     },
     RUN: {
-        animationSpeed: 0.25, // Will be modulated by move speed in logic
+        animationSpeed: 0.25,
         scale: { x: 1, y: 1 },
         anchor: { x: 0.5, y: 0.5 },
         offset: { x: 0, y: 0 }
@@ -45,7 +45,7 @@ export const PLAYER_CONFIG: Record<string, PlayerAnimationConfig> = {
     },
     KICK: {
         animationSpeed: 0.60,
-        scale: { x: 2.3, y: 2.3 }, // Upscaled to match 400px assets
+        scale: { x: 2.3, y: 2.3 },
         anchor: { x: 0.45, y: 0.5 },
         offset: { x: 0, y: 0 },
         attackHitbox: {
@@ -57,7 +57,7 @@ export const PLAYER_CONFIG: Record<string, PlayerAnimationConfig> = {
     },
     PUNCH: {
         animationSpeed: 0.60,
-        scale: { x: 2.2, y: 2.2 }, // Upscaled to match 400px assets
+        scale: { x: 2.2, y: 2.2 },
         anchor: { x: 0.4, y: 0.5 },
         offset: { x: 0, y: 0 },
         attackHitbox: {

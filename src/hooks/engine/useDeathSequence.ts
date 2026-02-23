@@ -27,14 +27,10 @@ export const useDeathSequence = ({
         const state = gameState.current;
 
         if (state.isDying) {
-            state.deathTimer += delta / GAME_CONFIG.deathSlowMotionScale; // scale logic update to match real time relative to slowed physics
-
-            // Red Ghost Trail
+            state.deathTimer += delta / GAME_CONFIG.deathSlowMotionScale;
             state.trailTimer += delta / GAME_CONFIG.deathSlowMotionScale;
             if (state.trailTimer > GAME_CONFIG.trailInterval * GAME_CONFIG.deathTrailIntervalMultiplier) {
                 state.trailTimer = 0;
-
-                // Clear previous ghost(s) to ensure only one exists (User Request)
                 trailsRef.current.forEach(t => {
                     if (!t.destroyed) {
                         renderer.app.stage.removeChild(t);
@@ -50,7 +46,7 @@ export const useDeathSequence = ({
                 ghost.anchor.copyFrom(character.anchor);
                 ghost.rotation = character.rotation;
                 ghost.alpha = GAME_CONFIG.deathGhostAlpha;
-                ghost.tint = GAME_CONFIG.deathGhostTint; // Red for death
+                ghost.tint = GAME_CONFIG.deathGhostTint;
                 ghost.zIndex = 3;
 
                 renderer.app.stage.addChild(ghost);
@@ -60,7 +56,7 @@ export const useDeathSequence = ({
             if (state.deathTimer > GAME_CONFIG.deathDuration) {
                 setIsGameOver(true);
                 state.isDying = false;
-                physics.engine.timing.timeScale = 0; // Freeze
+                physics.engine.timing.timeScale = 0;
             }
         }
     }, [gameState, trailsRef, renderer, character, setIsGameOver, physics]);

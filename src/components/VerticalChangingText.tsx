@@ -19,11 +19,9 @@ export function VerticalChangingText() {
         targetWord
           .split("")
           .map((char, index) => {
-            // Characters that have "settled"
             if (index < iteration / 3) {
               return char;
             }
-            // Random character for unsettled positions
             return chars[Math.floor(Math.random() * chars.length)];
           })
           .join("")

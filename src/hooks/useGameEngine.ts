@@ -17,6 +17,7 @@ export const useGameEngine = (
     const [activeQuote, setActiveQuote] = useState<string | null>(null);
     const [restartKey, setRestartKey] = useState(0);
     const [lives, setLives] = useState<number>(GAME_CONFIG.maxLives);
+    const [momoQuizActive, setMomoQuizActive] = useState(false);
 
     const { keys, jumpBufferTimer } = useInput();
     const trailsRef = useRef<PIXI.Sprite[]>([]);
@@ -38,6 +39,8 @@ export const useGameEngine = (
         playerHitThisFrame: false,
         playerHealedThisFrame: false,
         hurtCooldown: 0,
+        hasTriggeredMomo: false,
+        momoQuizState: 'inactive' as 'inactive' | 'active' | 'answered',
     });
 
     const {
@@ -75,6 +78,8 @@ export const useGameEngine = (
             playerHitThisFrame: false,
             playerHealedThisFrame: false,
             hurtCooldown: 0,
+            hasTriggeredMomo: false,
+            momoQuizState: 'inactive' as 'inactive' | 'active' | 'answered',
         };
         trailsRef.current = [];
     }, [restartKey]);
@@ -89,7 +94,8 @@ export const useGameEngine = (
         assetManager: assetManagerRef.current,
         setScore,
         setActiveQuote,
-        keys
+        keys,
+        setMomoQuizActive
     });
 
     const { update: updatePlayer } = usePlayerController({
@@ -166,7 +172,7 @@ export const useGameEngine = (
 
             if (!state.isGameOverLogic) {
                 // Spawner Logic (Pass EnemyManager so it can spawn tactical enemies)
-                spawner.update(delta, state.worldSpeed, enemyManager);
+                spawner.update(delta, state.worldSpeed, enemyManager, gameState);
 
                 if (backgroundRef.current) {
                     backgroundRef.current.tilePosition.x -= state.worldSpeed * delta * GAME_CONFIG.bgParallaxSpeed;
@@ -188,6 +194,17 @@ export const useGameEngine = (
         setRestartKey(prev => prev + 1);
     };
 
+    const handleMomoAnswer = (isCorrect: boolean) => {
+        const state = gameState.current;
+        if (isCorrect) {
+            state.score += GAME_CONFIG.MOMO_EVENT.reward;
+            setScore(state.score);
+        }
+        state.momoQuizState = 'answered';
+        state.worldSpeed = GAME_CONFIG.moveSpeed;
+        setMomoQuizActive(false);
+    };
+
     return {
         score,
         lives,
@@ -195,6 +212,9 @@ export const useGameEngine = (
         activeQuote,
         assetManagerRef,
         restartGame,
-        isLoaded: isReady
+        isLoaded: isReady,
+        momoQuizActive,
+        handleMomoAnswer,
+        setMomoQuizActive
     };
 };

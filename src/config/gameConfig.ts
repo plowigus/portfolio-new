@@ -11,7 +11,7 @@ export const GAME_CONFIG = {
     width: 1080,
     height: 450,
     debugMode: false,
-    COMMODORE_64_INTRO: true,
+    COMMODORE_64_INTRO: false,
 
     // Physics
     moveSpeed: 7,
@@ -298,8 +298,36 @@ export const GAME_CONFIG = {
         "Wcina jakby tydzień nie jadł!",
         "O pierona, ale tempo!",
         "Fest dobry zawodnik!"
-    ]
+    ],
 
+    // Momo Tattoo Shop Promo Event
+    MOMO_EVENT: {
+        triggerCoinCount: 200,
+        reward: 100,
+        question: "Hej! Szukasz dziarki z charakterem? Gdzie znajdziesz Serce na Dłoni?",
+        answers: [
+            "W Bytomiu!",
+            "Na Marsie",
+            "W Sosnowcu",
+            "Pod ziemią"
+        ],
+        correctAnswerIndex: 0,
+
+        // Shop (serce_tattoo) visuals
+        shopScale: 1,
+        shopOffsetX: 0,
+        shopOffsetY: 79,
+
+        // Momo NPC visuals
+        momoScale: 0.5,
+        momoOffsetX: -230,
+        momoOffsetY: 70,
+
+        // How far (px) onto the platform the player must walk before the quiz modal triggers
+        modalTriggerDistance: 700,
+
+        platformWidth: 2000
+    }
 
 } as const;
 

@@ -12,20 +12,16 @@ export function RightDecorativeLine() {
     const centerX = rect.left + rect.width / 2;
     const isFromLeft = e.clientX < centerX;
 
-    // Determine bend direction based on mouse position (opposite to mouse)
-    const bendX = isFromLeft ? 65 : -15; // Bend away from mouse
-    const overshootX = isFromLeft ? 0 : 50; // Overshoot in original direction
+    const bendX = isFromLeft ? 65 : -15;
+    const overshootX = isFromLeft ? 0 : 50;
 
-    // Kill any running animations
     gsap.killTweensOf(pathRef.current);
 
-    // Animate the curve bending like a bow string
     gsap.to(pathRef.current, {
       attr: { d: `M 25 0 Q ${bendX} 128 25 256` },
       duration: 0.25,
       ease: "power2.out",
       onComplete: () => {
-        // Spring back with overshoot in opposite direction
         gsap.to(pathRef.current, {
           attr: { d: `M 25 0 Q ${overshootX} 128 25 256` },
           duration: 0.12,
@@ -50,10 +46,8 @@ export function RightDecorativeLine() {
           className="flex flex-col items-center cursor-pointer translate-x-[25px]"
           onMouseEnter={handleMouseMove}
         >
-          {/* Top Circle */}
           <div className="w-2.5 h-2.5 bg-neutral-900 rounded-full relative z-10" />
 
-          {/* Curved Line (SVG) */}
           <svg
             width="50"
             height="256"
@@ -70,7 +64,6 @@ export function RightDecorativeLine() {
             />
           </svg>
 
-          {/* Bottom Circle */}
           <div className="w-2.5 h-2.5 bg-neutral-900 rounded-full relative z-10" />
         </div>
       </div>

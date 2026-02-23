@@ -9,14 +9,14 @@ type Phase = 'INTRO' | 'INPUT' | 'LEADERBOARD';
 interface HighScoreOverlayProps {
     score: number;
     onComplete: () => void;
-    viewOnly?: boolean; // New prop for Main Menu usage
+    viewOnly?: boolean;
 }
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split('');
 const DOTS_FILL = "...........................................................................................................................";
 
 export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onComplete, viewOnly = false }) => {
-    // Start at LEADERBOARD if viewOnly is true, otherwise INTRO
+
     const [phase, setPhase] = useState<Phase>(viewOnly ? 'LEADERBOARD' : 'INTRO');
     const [initials, setInitials] = useState<string[]>(['A', 'A', 'A']);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -25,7 +25,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [newScoreId, setNewScoreId] = useState<number | null>(null);
 
-    // Initial Fetch for ViewOnly mode
+
     useEffect(() => {
         if (viewOnly) {
             const fetchScores = async () => {
@@ -36,9 +36,6 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
         }
     }, [viewOnly]);
 
-    // --- LOGIKA ---
-
-    // Phase 1: Intro Timer
     useEffect(() => {
         if (phase === 'INTRO' && !viewOnly) {
             const timer = setTimeout(() => {
@@ -48,7 +45,6 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
         }
     }, [phase, viewOnly]);
 
-    // Handle Keyboard Input
     const handleInput = useCallback(async (e: KeyboardEvent) => {
         if (phase !== 'INPUT' || isSubmitting || viewOnly) return;
 
@@ -109,17 +105,16 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
     }, [phase, handleInput, handleLeaderboardInput]);
 
 
-    // --- RENDER ---
+
 
     return (
         <div className="absolute inset-0 z-50 bg-black flex flex-col items-center justify-center font-retro select-none overflow-hidden">
 
-            {/* Retro Scanlines Background */}
+
             <div className="absolute inset-0 pointer-events-none z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-size-[100%_4px,3px_100%]" />
             <div className="absolute inset-0 pointer-events-none z-20 bg-black/10 animate-pulse" />
 
 
-            {/* Phase 1: Intro */}
             {phase === 'INTRO' && (
                 <div className="relative z-30 flex flex-col items-center animate-in zoom-in duration-700">
                     <h1 className="font-retro text-8xl md:text-9xl font-black text-transparent bg-clip-text bg-linear-to-b from-yellow-300 via-orange-500 to-red-600 drop-shadow-[4px_4px_0_#000] animate-pulse scale-110 tracking-wider">
@@ -131,7 +126,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                 </div>
             )}
 
-            {/* Phase 2: Input */}
+
             {phase === 'INPUT' && (
                 <div className="relative z-30 flex flex-col items-center gap-12 w-full max-w-lg">
                     <div className="text-center">
@@ -171,19 +166,18 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                 </div>
             )}
 
-            {/* Phase 3: Leaderboard */}
+
             {phase === 'LEADERBOARD' && (
                 <div className="relative z-30 w-full h-full flex flex-col px-4 md:px-12 py-4 max-w-[800px]">
-                    {/* Header */}
+
                     <div className="text-center mb-4">
                         <h2 className="font-retro text-3xl mt-2 font-black text-blue-500 tracking-[0.2em] drop-shadow-[3px_3px_0_#000] inline-block">
                             HIGH SCORES
                         </h2>
                     </div>
 
-                    {/* Table Container */}
+
                     <div className="flex flex-col gap-0 w-full font-retro">
-                        {/* Header Row */}
                         <div className="flex text-yellow-600 mb-2 text-lg md:text-xl font-retro border-b-2 border-yellow-800/50 pb-1">
                             <span className="w-16 font-retro text-left">RNK</span>
                             <span className="font-retro">NAME</span>
@@ -194,33 +188,32 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                             <p className="font-retro text-center text-gray-500 py-8">NO SCORES YET</p>
                         ) : (
                             leaderboard.map((entry, idx) => {
-                                // HIGHLIGHT LOGIC: Use exact ID match
+
                                 const isMe = newScoreId ? entry.id === newScoreId : false;
                                 const rank = idx + 1;
 
-                                // Rank Colors
+
                                 let rankColor = "text-white";
-                                if (rank === 1) rankColor = "text-yellow-400 "; // Gold
-                                else if (rank === 2) rankColor = "text-gray-300";   // Silver
-                                else if (rank === 3) rankColor = "text-orange-400"; // Bronze
+                                if (rank === 1) rankColor = "text-yellow-400 ";
+                                else if (rank === 2) rankColor = "text-gray-300";
+                                else if (rank === 3) rankColor = "text-orange-400";
 
                                 const rowColor = isMe ? "text-blue-300 animate-pulse" : rankColor;
 
                                 return (
                                     <div key={entry.id || idx} className={`flex items-end w-full ${rowColor} text-lg md:text-xl leading-snug`}>
-                                        {/* RANK + INITIALS */}
+
                                         <div className="flex items-center whitespace-nowrap z-10 bg-black pr-2">
                                             <span className="w-16 text-left  font-retro">{rank}.</span>
                                             <span className="tracking-[0.2em] font-retro">{entry.initials}</span>
                                         </div>
 
-                                        {/* REAL FONT DOTS FILLER */}
-                                        {/* Flex-1 takes remaining space, overflow-hidden cuts the string */}
+
                                         <div className="flex-1 overflow-hidden whitespace-nowrap opacity-30 text-white relative top-[-3px]">
                                             {DOTS_FILL}
                                         </div>
 
-                                        {/* SCORE */}
+
                                         <div className="whitespace-nowrap font-retro z-10 bg-black pl-2">
                                             {String(entry.score).padStart(6, '0')}
                                         </div>
@@ -230,7 +223,7 @@ export const HighScoreOverlay: React.FC<HighScoreOverlayProps> = ({ score, onCom
                         )}
                     </div>
 
-                    {/* Footer - Updated for ViewOnly vs Game Over */}
+
                     <div className="mt-auto pt-2 text-center animate-bounce">
                         <p className="font-retro text-lg text-green-500 tracking-widest">
                             {viewOnly ? "PRESS ENTER TO RETURN" : "PRESS ENTER TO RESTART"}

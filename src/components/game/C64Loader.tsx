@@ -43,30 +43,28 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
         };
 
         const runSequence = async () => {
-            // 1. Wait 800ms
+
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
             if (!isMounted) return;
 
-            // 2. Type LOAD "*",8,1
+
             await typeText('LOAD "*",8,1');
             if (!isMounted) return;
 
-            // 3. Wait 500ms then show SEARCHING...
+
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
             if (!isMounted) return;
             setLines((prev) => [...prev, "SEARCHING FOR SILESIA RUNNER"]);
 
-            // 4. Wait 1000ms then show LOADING
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 1000); });
             if (!isMounted) return;
             setLines((prev) => [...prev, "LOADING"]);
 
-            // TRIGGER GAME LOADING HERE
             if (onStartLoading) {
                 onStartLoading();
             }
 
-            // SILESIAN DINNER SEQUENCE
+
             const align = (text: string) => text.padEnd(28, " ") + "OK";
 
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 600); });
@@ -81,24 +79,23 @@ export default function C64Loader({ onStartLoading, isGameReady = false, onCompl
             if (!isMounted) return;
             setLines((prev) => [...prev, align("MODRA KAPUSTA")]);
 
-            // WAIT FOR GAME TO BE READY
-            // Poll every 100ms until isGameReady is true
+
             while (!isGameReadyRef.current) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 if (!isMounted) return;
             }
 
-            // 5. Wait 1500ms then show READY.
+
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 1500); });
             if (!isMounted) return;
             setLines((prev) => [...prev, "READY."]);
 
-            // 6. Wait 500ms then type RUN
+
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 500); });
             if (!isMounted) return;
             await typeText("RUN");
 
-            // 7. Final buffer before removing loader
+
             await new Promise((resolve) => { timeoutId = setTimeout(resolve, 800); });
             if (onComplete) onComplete();
         };

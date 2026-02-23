@@ -29,7 +29,6 @@ export const PUNCH_JSON = [
     { "name": "punch-first-6", "x": 400, "y": 0, "width": 200, "height": 200 },
     { "name": "punch-first-7", "x": 600, "y": 0, "width": 200, "height": 200 },
     { "name": "punch-first-8", "x": 800, "y": 0, "width": 200, "height": 200 },
-    // ZMIANA: punch-sec -> punch-second
     { "name": "punch-second-1", "x": 0, "y": 200, "width": 200, "height": 200 },
     { "name": "punch-second-2", "x": 200, "y": 200, "width": 200, "height": 200 },
     { "name": "punch-second-3", "x": 400, "y": 200, "width": 200, "height": 200 },
@@ -60,10 +59,8 @@ export interface FrameData {
 export function getAnimationFrames(type: 'kick' | 'punch', stage: string): FrameData[] {
     const data = type === 'kick' ? KICK_JSON : PUNCH_JSON;
 
-    // Filter frames for the specific stage, e.g., "kick-first"
     const frames = data.filter(frame => frame.name.includes(stage));
 
-    // Sort frames by the number at the end of the name
     return frames.sort((a, b) => {
         const getNumber = (name: string) => {
             const parts = name.split('-');
