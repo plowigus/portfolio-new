@@ -20,7 +20,7 @@ export function AboutView({ onBootComplete }: AboutViewProps) {
             { text: "LOADING...", delay: 800 },
             { text: "READY.", delay: 500 },
             { text: "-------------", delay: 500 },
-            { text: "HELLO. I AM PATRYK", delay: 50 },
+            { text: "HELLO. I'M PATRYK", delay: 50 },
             { text: "A FRONTEND DEVELOPER BUILDING MODERN WEB EXPERIENCES.", delay: 400 },
             { text: "I USE AI IN MY DAILY WORKFLOW TO SPEED UP DEVELOPMENT AND DELIVERY.", delay: 50 },
             { text: "AND THAT'S IT FOR NOW. I LET MY PROJECTS DO THE TALKING.", delay: 50 },
